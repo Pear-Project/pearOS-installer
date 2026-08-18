@@ -25,7 +25,7 @@ error_exit() {
 }
 
 has_internet() {
-  ping -c 1 -W 3 8.8.8.8 &>/dev/null || curl -s --max-time 3 https://archlinux.org &>/dev/null
+  ping -c 1 -W 3 8.8.8.8 &>/dev/null || curl -s --max-time 3 https://www.debian.org &>/dev/null
 }
 
 echo "=== pearOS Post-Install Script Started: $(date) ==="
@@ -86,7 +86,7 @@ rm -rf /etc/skel/.config/autostart/xyz.pearos-post-install.desktop
 # unauthenticated root on every boot.
 
 echo "Creating user $USER_NAME..."
-if ! useradd -m -g users -G wheel -s /bin/bash -c "$FULL_NAME" "$USER_NAME"; then
+if ! useradd -m -G sudo -s /bin/bash -c "$FULL_NAME" "$USER_NAME"; then
   error_exit "Failed to create user: $USER_NAME"
 fi
 
@@ -216,8 +216,8 @@ if ! grub-mkconfig -o /boot/grub/grub.cfg; then
   error_exit "Failed to generate grub configuration"
 fi
 
-# Sync system clock before GPG operations only if internet is available.
-# A skewed clock causes "key created in the future" GPG errors.
+# Sync system clock if internet is available (a skewed clock can cause TLS
+# and package timestamp issues for the steps below, e.g. cloning Liquid Gel).
 echo "Checking internet connectivity..."
 if has_internet; then
   echo "Internet available. Synchronizing system clock..."
@@ -227,29 +227,10 @@ if has_internet; then
     sleep 2
   done
   if ! timedatectl show | grep -q "NTPSynchronized=yes"; then
-    echo "WARNING: NTP sync did not complete in time, GPG key signing may fail" >&2
+    echo "WARNING: NTP sync did not complete in time" >&2
   fi
 else
   echo "No internet. Skipping NTP sync."
-fi
-
-# Initialize and trust pearOS maintainer key on installed system
-# timeout 120s: pacman-key --init can block for minutes on VMs due to low entropy
-echo "Initializing pacman keyring (may take up to 2 minutes)..."
-if ! timeout 120 pacman-key --init; then
-  echo "WARNING: pacman-key --init timed out or failed, continuing..." >&2
-fi
-if ! pacman-key --populate; then
-  echo "WARNING: pacman-key --populate failed, continuing..." >&2
-fi
-if ! pacman-key --lsign-key 4C1A9F3C131ACA95; then
-  echo "WARNING: Failed to locally sign pacman key 4C1A9F3C131ACA95, continuing..." >&2
-fi
-if ! pacman-key -a "$DIR/inled-archive.key"; then
-  echo "WARNING: Failed to import inled pacman key, continuing..." >&2
-fi
-if ! pacman-key --lsign-key 89F828A9675B63CD0077CE9965AA57CF36E2018F; then
-  echo "WARNING: Failed to locally sign inled pacman key, continuing..." >&2
 fi
 
 # Backup sudoers before modifying
@@ -258,13 +239,13 @@ if [ -f /etc/sudoers ]; then
   cp /etc/sudoers /etc/sudoers.backup.$(date +%Y%m%d_%H%M%S)
 fi
 
-if ! sed -i 's/# %wheel ALL=(ALL) ALL$/%wheel ALL=(ALL) ALL/' /etc/sudoers; then
+if ! sed -i 's/# %sudo\tALL=(ALL:ALL) ALL$/%sudo\tALL=(ALL:ALL) ALL/' /etc/sudoers; then
   error_exit "Failed to configure sudoers"
 fi
 
-echo "Adding user to wheel group..."
+echo "Adding user to sudo group..."
 if ! echo "$USER_NAME   ALL=(ALL) ALL" | tee -a /etc/sudoers; then
-  error_exit "Failed to add user to wheel group in sudoers"
+  error_exit "Failed to add user to sudoers"
 fi
 if ! visudo -c -f /etc/sudoers; then
   error_exit "Sudoers file is invalid after modification"
@@ -304,7 +285,7 @@ if [ -f "$PROFILE_PIC_FILE" ] && [ -s "$PROFILE_PIC_FILE" ]; then
       if ! cp -f "$PROFILE_PIC_SRC" "$USER_FACE"; then
         error_exit "Failed to copy profile picture to $USER_FACE"
       fi
-      chown "$USER_NAME:users" "$USER_FACE" 2>/dev/null || true
+      chown "$USER_NAME:$USER_NAME" "$USER_FACE" 2>/dev/null || true
       echo "Profile picture set for user $USER_NAME"
     fi
 
@@ -432,7 +413,7 @@ X-GNOME-Autostart-enabled=true
 Name=pearOS First Theme Setup
 EOF
 
-  chown -R "$USER_NAME:users" "$AUTOSTART_DIR" "$SCRIPTS_DIR" 2>/dev/null || true
+  chown -R "$USER_NAME:$USER_NAME" "$AUTOSTART_DIR" "$SCRIPTS_DIR" 2>/dev/null || true
   echo "Scheduled theme application for $USER_NAME on first login"
 else
   echo "Theme switcher not found or $USER_NAME home missing, skipping theme sync" >&2
@@ -440,7 +421,7 @@ fi
 
 # Remove useless packages and their desktop entries
 echo "Removing unnecessary packages..."
-if ! yes | LC_ALL=en_US.UTF-8 pacman -R electron npm plasma-sdk discover pearos-livecd-desktop; then
+if ! LC_ALL=en_US.UTF-8 DEBIAN_FRONTEND=noninteractive apt-get purge -y electron npm plasma-sdk discover pearos-livecd-desktop; then
   echo "WARNING: Some packages failed to remove" >&2
 fi
 
@@ -460,22 +441,6 @@ if [ -f /etc/sddm.conf ]; then
   rm -f /etc/sddm.conf
 fi
 
-# Installing yay helper (requires internet)
-if has_internet; then
-  git clone https://aur.archlinux.org/yay.git /tmp/yay-build && \
-    chown -R default:users /tmp/yay-build && \
-    su -c "cd /tmp/yay-build && makepkg -si --noconfirm" default && \
-    rm -rf /tmp/yay-build || echo "WARNING: yay installation failed, skipping" >&2
-else
-  echo "No internet. Skipping yay installation."
-fi
-
-# Installing plymouth
-#yay -S plymouth --noconfirm
-
-# Setting pearOS plymouth theme
-#plymouth-set-default-theme -R pear-plymouth
-
 # Fixing the SDDM theme
 echo "Configuring SDDM theme..."
 cat > /etc/sddm.conf << 'EOF'
@@ -493,7 +458,7 @@ fi
 # Liquid Gel: requires internet to download source and packages
 if has_internet; then
   echo "Installing cmake and extra-cmake-modules for Liquid Gel build..."
-  if ! pacman -S --noconfirm cmake extra-cmake-modules 2>> "$LOG_FILE"; then
+  if ! DEBIAN_FRONTEND=noninteractive apt-get install -y cmake extra-cmake-modules 2>> "$LOG_FILE"; then
     echo "Warning: Failed to install cmake/extra-cmake-modules" >&2
   fi
 
@@ -504,25 +469,25 @@ if has_internet; then
     echo "Failed to download Liquid Gel" >&2
   fi
 
-  if [ -d /tmp/liquid-gel ]; then
-    echo "Compiling Liquid Gel"
-    if ( cd /tmp/liquid-gel && mkdir -p build && cd build && cmake .. -DCMAKE_INSTALL_PREFIX=/usr && make -j"$(nproc)" 2>> "$LOG_FILE" && make install 2>> "$LOG_FILE" ); then
-      echo "Liquid Gel Compiled..."
-    else
-      echo "Failed to Compile Liquid Gel - Build Failed" >&2
-      echo "Failed to install Liquid Gel" >&2
-    fi
+#  if [ -d /tmp/liquid-gel ]; then
+#    echo "Compiling Liquid Gel"
+#    if ( cd /tmp/liquid-gel && mkdir -p build && cd build && cmake .. -DCMAKE_INSTALL_PREFIX=/usr && make -j"$(nproc)" 2>> "$LOG_FILE" && make install 2>> "$LOG_FILE" ); then
+#      echo "Liquid Gel Compiled..."
+#    else
+#      echo "Failed to Compile Liquid Gel - Build Failed" >&2
+#      echo "Failed to install Liquid Gel" >&2
+#    fi
 
-    echo "Cleanup Liquid Gel source"
-    if rm -rf /tmp/liquid-gel; then
-      echo "Finish cleanup"
-    else
-      echo "Failed to Cleanup files" >&2
-    fi
-  fi
+#    echo "Cleanup Liquid Gel source"
+#    if rm -rf /tmp/liquid-gel; then
+#      echo "Finish cleanup"
+#    else
+#      echo "Failed to Cleanup files" >&2
+#    fi
+#  fi
 
   echo "Removing cmake and extra-cmake-modules..."
-  if ! pacman -R --noconfirm cmake extra-cmake-modules 2>> "$LOG_FILE"; then
+  if ! DEBIAN_FRONTEND=noninteractive apt-get purge -y cmake extra-cmake-modules 2>> "$LOG_FILE"; then
     echo "Warning: Failed to remove cmake/extra-cmake-modules" >&2
   fi
 else
