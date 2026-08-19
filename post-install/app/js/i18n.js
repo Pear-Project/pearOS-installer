@@ -6,10 +6,14 @@ var i18n = (function () {
     return key.split('.').reduce(function (o, k) { return o && o[k]; }, strings);
   }
 
+  function rebrand(val) {
+    return window.OSRelease ? window.OSRelease.rebrand(val) : val;
+  }
+
   function apply() {
     document.querySelectorAll('[data-i18n]').forEach(function (el) {
       var val = resolve(el.getAttribute('data-i18n'));
-      if (val !== undefined) el.textContent = val;
+      if (val !== undefined) el.textContent = rebrand(val);
     });
     document.querySelectorAll('[data-i18n-attr]').forEach(function (el) {
       var pairs = el.getAttribute('data-i18n-attr').split(';');
@@ -18,7 +22,7 @@ var i18n = (function () {
         if (parts.length === 2) {
           var attr = parts[0].trim();
           var val = resolve(parts[1].trim());
-          if (val !== undefined) el.setAttribute(attr, val);
+          if (val !== undefined) el.setAttribute(attr, rebrand(val));
         }
       });
     });

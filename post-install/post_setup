@@ -132,13 +132,17 @@ else
   echo "Default user does not exist, skipping..."
 fi
 
-# Set/load the keymap
+# Set/load the keymap.
+# localectl talks to systemd-localed over D-Bus/polkit, which isn't reliably
+# available this early at first boot (fails with "Access denied" even as
+# root). The keymap is applied for real below via /etc/vconsole.conf and the
+# X11 config, so localectl/loadkeys here are best-effort only.
 echo "Setting keymap to $KEYMAP..."
 if ! localectl set-keymap "$KEYMAP"; then
-  error_exit "Failed to set keymap: $KEYMAP"
+  echo "WARNING: localectl could not set the keymap (no D-Bus/polkit session available); falling back to direct config files."
 fi
 if ! loadkeys "$KEYMAP"; then
-  error_exit "Failed to load keymap: $KEYMAP"
+  echo "WARNING: loadkeys failed to apply the keymap to the current console; it will still take effect via /etc/vconsole.conf."
 fi
 
 # Pushing Timezone to localtime file
@@ -172,12 +176,11 @@ if ! echo "LANG=$LOCALE" | tee /etc/locale.conf; then
   error_exit "Failed to write /etc/locale.conf"
 fi
 
-# If there is a custom keymap, add it to the vconsole
-if [ "$KEYMAP" != "us" ]; then
-  echo "Configuring custom keymap..."
-  if ! echo "KEYMAP=$KEYMAP" | tee /etc/vconsole.conf; then
-    error_exit "Failed to write /etc/vconsole.conf"
-  fi
+# Persist the console keymap so it survives reboots (needed regardless of
+# whether localectl above succeeded).
+echo "Configuring console keymap..."
+if ! echo "KEYMAP=$KEYMAP" | tee /etc/vconsole.conf; then
+  error_exit "Failed to write /etc/vconsole.conf"
 fi
 
 # Configure X11 keyboard layout (for X11 desktop environments)
