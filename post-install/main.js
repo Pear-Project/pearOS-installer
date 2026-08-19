@@ -121,7 +121,10 @@ ipcMain.on('close-me', (evt, arg) => {
 
 ipcMain.on('run-post-setup', (event, cmdArgs) => {
   const env = { ...process.env, PATH: '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' }
-  const proc = spawn('sudo', ['post_setup'].concat(cmdArgs), { env })
+  // Absolute path: sudo's own secure_path (not the env PATH above) governs command
+  // lookup, and on this image it doesn't include /usr/local/bin, so a bare
+  // "post_setup" fails with "command not found" even though the file exists there.
+  const proc = spawn('sudo', ['/usr/local/bin/post_setup'].concat(cmdArgs), { env })
 
   proc.stdout.on('data', d => {
     if (!event.sender.isDestroyed()) event.sender.send('post-setup-output', d.toString())
