@@ -5,7 +5,7 @@ requestSingleInstanceLock() + 'second-instance' focus-stealing in main.js)."""
 import os
 import sys
 
-# Gsk.GLShader (used by pages/hello.py for the liquid-glass lettering effect)
+# Gsk.GLShader (used by pages/hello.py for the liquid-gel lettering effect)
 # only works with GTK4's legacy "gl" renderer — the "ngl" renderer that is
 # now the default (GTK >= 4.14) reports "renderer does not support gl
 # shaders" at compile time. Must be set before GDK connects. hello.py still

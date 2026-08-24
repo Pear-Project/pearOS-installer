@@ -1,8 +1,8 @@
 """Port of app/hello.html: hand-drawn stroke animation of the pearOS
 wordmark over the clean, untouched desktop wallpaper.
 
-The wordmark itself is rendered as 'liquid glass': a GPU shader
-(liquid_glass.LiquidGlassText) refracts + chromatically-aberrates the sharp
+The wordmark itself is rendered as 'liquid gel': a GPU shader
+(liquid_gel.LiquidGelText) refracts + chromatically-aberrates the sharp
 wallpaper directly behind each letter, restricted to the stroke shape — nothing
 else on the page is touched. If the shader can't compile (old GTK, no GL
 renderer, ...), this falls back to a flat semi-transparent stroke instead, so
@@ -15,7 +15,7 @@ from gi.repository import Gtk
 
 from .. import background
 from ..background import Background
-from ..liquid_glass import LiquidGlassText
+from ..liquid_gel import LiquidGelText
 from ..svgpath import parse_path, path_to_cairo
 from ..stroke_anim import AnimatedCanvas, ease_out_cubic
 
@@ -39,13 +39,51 @@ _VIEWBOX = (1230.94, 414.57)
 _DASH_LEN = 5000.0
 _DURATION_S = 4.0
 
+# The path is one continuous cursive stroke (single subpath, no per-letter
+# moveto) - there's no explicit boundary for "just the h". This is the
+# bounding box of the first 9 of its 34 draw commands, which by inspection
+# is the ascender-to-baseline footprint of the h specifically (the next
+# command already jumps into the e) - used to open the animation zoomed in
+# on it before pulling back to the normal full-word framing.
+_ZOOM_START_OPS = 9
+_ZOOM_FACTOR = 8.0
+_ZOOM_FRACTION = 0.35
+
+
+def _ops_bbox(ops):
+    xs, ys = [], []
+    for op in ops:
+        coords = op[1:]
+        for i in range(0, len(coords), 2):
+            xs.append(coords[i])
+            ys.append(coords[i + 1])
+    return min(xs), max(xs), min(ys), max(ys)
+
+
+_OPEN_BBOX = _ops_bbox(_OPS[:_ZOOM_START_OPS])
+
 
 def _flat_draw_frame(cr, w, h, t):
-    """Fallback used only if the liquid-glass shader fails to compile."""
+    """Fallback used only if the liquid-gel shader fails to compile."""
     scale = min(w / _VIEWBOX[0], h / _VIEWBOX[1]) * 0.9
     ox = (w - _VIEWBOX[0] * scale) / 2
     oy = (h - _VIEWBOX[1] * scale) / 2
     cr.save()
+
+    # Same opening zoom-in/pull-back as the shader path (see liquid_gel.py's
+    # LiquidGelText._camera) - t is already eased over the full duration, so
+    # this re-eases a remapped fraction of it rather than plumbing a second
+    # raw-elapsed value through AnimatedCanvas just for this fallback.
+    cam_t = min(1.0, t / _ZOOM_FRACTION)
+    cam_t = ease_out_cubic(cam_t)
+    zoom = _ZOOM_FACTOR + (1.0 - _ZOOM_FACTOR) * cam_t
+    if zoom != 1.0:
+        x0, x1, y0, y1 = _OPEN_BBOX
+        focus_x = ox + scale * ((x0 + x1) / 2.0 + _TRANSLATE[0])
+        focus_y = oy + scale * ((y0 + y1) / 2.0 + _TRANSLATE[1])
+        cr.translate(focus_x * (1.0 - zoom), focus_y * (1.0 - zoom))
+        cr.scale(zoom, zoom)
+
     cr.translate(ox, oy)
     cr.scale(scale, scale)
     cr.translate(*_TRANSLATE)
@@ -71,8 +109,9 @@ class HelloPage:
         self.column.set_hexpand(True)
         self.column.set_vexpand(True)
 
-        self.canvas = LiquidGlassText(
-            _DURATION_S, _OPS, _DASH_LEN, _TRANSLATE, _VIEWBOX, ease_out_cubic
+        self.canvas = LiquidGelText(
+            _DURATION_S, _OPS, _DASH_LEN, _TRANSLATE, _VIEWBOX, ease_out_cubic,
+            zoom_start_ops=_ZOOM_START_OPS, zoom_factor=_ZOOM_FACTOR, zoom_fraction=_ZOOM_FRACTION,
         )
         self.canvas.set_wallpaper(background.load_pixbuf())
         self.canvas.set_shader_result_callback(self._on_shader_result)

@@ -1,4 +1,4 @@
-"""Real-time 'Liquid Glass' text: a GPU fragment shader (Gsk.GLShader) that
+"""Real-time 'Liquid Gel' text: a GPU fragment shader (Gsk.GLShader) that
 refracts the sharp wallpaper directly behind the letters, restricted to the
 animated stroke, and lights it like a solid glass rod (directional
 highlight on one side, shaded on the other — see Apple's macOS 26 'hello'
@@ -171,12 +171,32 @@ def _soften(surface, radius_px):
     surface.mark_dirty()
 
 
-class LiquidGlassText(Gtk.Widget):
+def _ops_bbox(ops):
+    xs, ys = [], []
+    for op in ops:
+        coords = op[1:]
+        for i in range(0, len(coords), 2):
+            xs.append(coords[i])
+            ys.append(coords[i + 1])
+    return min(xs), max(xs), min(ys), max(ys)
+
+
+class LiquidGelText(Gtk.Widget):
     """duration_s/mask_ops/dash_len/translate/viewbox describe the animated
     stroke exactly like stroke_anim.AnimatedCanvas + svgpath — see
-    pages/hello.py for how the path is built."""
+    pages/hello.py for how the path is built.
 
-    def __init__(self, duration_s, mask_ops, dash_len, translate, viewbox, easing):
+    zoom_start_ops: if set, the camera opens zoomed in on just the bounding
+    box of mask_ops[:zoom_start_ops] (e.g. the first letter's worth of path
+    commands) and eases out to the normal full-word framing over the first
+    zoom_fraction of the animation - a "focus on the first letter, then pull
+    back" opening shot, on top of the existing stroke-writing reveal (which
+    keeps running the whole duration_s, unaffected by this)."""
+
+    def __init__(
+        self, duration_s, mask_ops, dash_len, translate, viewbox, easing,
+        zoom_start_ops=None, zoom_factor=2.2, zoom_fraction=0.35,
+    ):
         super().__init__()
         self._duration = duration_s
         self._ops = mask_ops
@@ -185,6 +205,10 @@ class LiquidGlassText(Gtk.Widget):
         self._viewbox = viewbox
         self._easing = easing
         self._progress = 0.0
+        self._cam_t = 1.0
+        self._zoom_factor = zoom_factor
+        self._zoom_fraction = max(1e-3, zoom_fraction)
+        self._open_bbox = _ops_bbox(mask_ops[:zoom_start_ops]) if zoom_start_ops else None
         self._start_us = None
         self._shader = None
         self._shader_ok = None  # None = untried, True/False after first attempt
@@ -213,6 +237,9 @@ class LiquidGlassText(Gtk.Widget):
         elapsed = (now - self._start_us) / 1_000_000.0
         raw = min(1.0, elapsed / self._duration) if self._duration > 0 else 1.0
         self._progress = self._easing(raw)
+        if self._open_bbox is not None:
+            cam_raw = min(1.0, elapsed / (self._duration * self._zoom_fraction))
+            self._cam_t = self._easing(cam_raw)
         widget.queue_draw()
         return raw < 1.0
 
@@ -279,10 +306,33 @@ class LiquidGlassText(Gtk.Widget):
         self._crop_cache_texture = _surface_to_texture(surface)
         return self._crop_cache_texture
 
-    def _stroke_path(self, cr, w, h):
+    def _fit_transform(self, w, h):
+        """scale/offset that centers the whole word in (w, h) with a 10%
+        margin - shared by the mask drawing and the opening zoom-in, so the
+        two always agree on where things land."""
         scale = min(w / self._viewbox[0], h / self._viewbox[1]) * 0.9
         ox = (w - self._viewbox[0] * scale) / 2
         oy = (h - self._viewbox[1] * scale) / 2
+        return scale, ox, oy
+
+    def _camera(self, w, h):
+        """Returns (zoom, focus_x, focus_y) in widget-pixel space for the
+        opening zoom-in/pull-back. zoom == 1.0 (the fully-pulled-back,
+        no-op case) once _cam_t reaches 1 or there's no configured opening
+        region."""
+        if self._open_bbox is None or self._cam_t >= 1.0:
+            return 1.0, 0.0, 0.0
+        scale, ox, oy = self._fit_transform(w, h)
+        x0, x1, y0, y1 = self._open_bbox
+        cx = (x0 + x1) / 2.0 + self._translate[0]
+        cy = (y0 + y1) / 2.0 + self._translate[1]
+        focus_x = ox + scale * cx
+        focus_y = oy + scale * cy
+        zoom = self._zoom_factor + (1.0 - self._zoom_factor) * self._cam_t
+        return zoom, focus_x, focus_y
+
+    def _stroke_path(self, cr, w, h):
+        scale, ox, oy = self._fit_transform(w, h)
         cr.translate(ox, oy)
         cr.scale(scale, scale)
         cr.translate(*self._translate)
@@ -340,6 +390,18 @@ class LiquidGlassText(Gtk.Widget):
         builder.set_float(5, 26.0)  # frost blur radius, in pixels
         args = builder.to_args()
 
+        # Opening zoom-in/pull-back: an outer scale+translate around the
+        # shader node, centered on the opening letter's focus point. The
+        # shader itself keeps rendering in the same (0, 0, w, h) local space
+        # either way - it has no idea it's being magnified, so none of its
+        # texel/refraction math needs to change for this.
+        zoom, focus_x, focus_y = self._camera(w, h)
+        zoomed = zoom != 1.0
+        if zoomed:
+            snapshot.save()
+            snapshot.translate(Graphene.Point().init(focus_x * (1.0 - zoom), focus_y * (1.0 - zoom)))
+            snapshot.scale(zoom, zoom)
+
         try:
             snapshot.push_gl_shader(self._shader, bounds, args)
             for tex in (tex1, tex2, tex3):
@@ -348,3 +410,6 @@ class LiquidGlassText(Gtk.Widget):
             snapshot.pop()
         except GLib.Error:
             self._shader_ok = False
+
+        if zoomed:
+            snapshot.restore()
