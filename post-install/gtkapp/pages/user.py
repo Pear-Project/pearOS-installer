@@ -1,0 +1,231 @@
+"""Port of templates/user.html + the user-related parts of engine.js
+(validateUser, saveUser, check_passwords_match, checkFormValidity,
+load_profile_pictures)."""
+import gi
+
+gi.require_version("Gtk", "4.0")
+gi.require_version("GdkPixbuf", "2.0")
+from gi.repository import Gtk, GdkPixbuf
+
+from ..widgets import page_root, make_title, make_description
+
+
+class UserPage:
+    def __init__(self, app):
+        self.app = app
+
+        content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        content.set_hexpand(True)
+        self.title = make_title("Create a Computer Account")
+        content.append(self.title)
+        self.description = make_description(
+            "Fill out the following informations to create your computer account."
+        )
+        content.append(self.description)
+
+        self.pictures_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=15)
+        self.pictures_row.set_halign(Gtk.Align.CENTER)
+        self.pictures_row.set_margin_start(4)
+        self.pictures_row.set_margin_end(4)
+
+        # macOS's own picker scrolls horizontally with rubber-band overscroll
+        # rather than just laying every avatar out edge to edge - GTK4's
+        # ScrolledWindow already does kinetic/elastic overscroll natively,
+        # this is just wiring it up. PolicyType.NEVER on vertical since this
+        # never needs to scroll that way; EXTERNAL keeps the horizontal
+        # scrollbar chrome from ever reserving space/being drawn, matching
+        # how macOS hides it here too.
+        self.pictures_scroller = Gtk.ScrolledWindow()
+        self.pictures_scroller.set_policy(Gtk.PolicyType.EXTERNAL, Gtk.PolicyType.NEVER)
+        self.pictures_scroller.set_min_content_width(480)
+        self.pictures_scroller.set_max_content_width(480)
+        self.pictures_scroller.set_min_content_height(96)
+        self.pictures_scroller.set_halign(Gtk.Align.CENTER)
+        self.pictures_scroller.set_margin_top(10)
+        self.pictures_scroller.set_margin_bottom(10)
+        self.pictures_scroller.set_child(self.pictures_row)
+        content.append(self.pictures_scroller)
+        self._picture_buttons = []
+        self.selected_picture = None
+
+        form = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        form.set_halign(Gtk.Align.CENTER)
+
+        self.full_name = Gtk.Entry(placeholder_text="Full Name")
+        self.full_name.add_css_class("textbox")
+        form.append(self.full_name)
+
+        self.account_name = Gtk.Entry(placeholder_text="Account Name")
+        self.account_name.add_css_class("textbox")
+        form.append(self.account_name)
+
+        self.account_hint = Gtk.Label(label="This will be the name of your home folder")
+        self.account_hint.add_css_class("account-name-hint")
+        self.account_hint.set_halign(Gtk.Align.START)
+        form.append(self.account_hint)
+
+        self.hostname = Gtk.Entry(placeholder_text="Hostname", text="pearOS-machine")
+        self.hostname.add_css_class("textbox")
+        form.append(self.hostname)
+
+        self.hostname_hint = Gtk.Label(label="This will be your computer's network name")
+        self.hostname_hint.add_css_class("account-name-hint")
+        self.hostname_hint.set_halign(Gtk.Align.START)
+        form.append(self.hostname_hint)
+
+        password_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=15)
+        self.password = Gtk.PasswordEntry(placeholder_text="Password", show_peek_icon=True)
+        self.password.add_css_class("textbox")
+        self.password.add_css_class("textbox-half")
+        self.password_confirm = Gtk.PasswordEntry(
+            placeholder_text="Verify Password", show_peek_icon=True
+        )
+        self.password_confirm.add_css_class("textbox")
+        self.password_confirm.add_css_class("textbox-half")
+        password_row.append(self.password)
+        password_row.append(self.password_confirm)
+        form.append(password_row)
+
+        self.password_check = Gtk.Label(label="")
+        self.password_check.add_css_class("password-check")
+        form.append(self.password_check)
+
+        content.append(form)
+
+        for entry in (self.full_name, self.account_name, self.hostname):
+            entry.connect("changed", self._on_form_changed)
+        self.password.connect("changed", self._on_password_changed)
+        self.password_confirm.connect("changed", self._on_password_changed)
+
+        self.widget, self.card = page_root(
+            content, on_back=self._on_back, on_forward=self._on_continue, forward_label="Continue"
+        )
+
+    def on_show(self):
+        self.title.set_label(self.app.t("user.title", "Create a Computer Account"))
+        self.description.set_label(
+            self.app.t(
+                "user.description",
+                "Fill out the following informations to create your computer account.",
+            )
+        )
+        self.card.forward_button.set_label(self.app.t("user.continue", "Continue"))
+        self.full_name.set_placeholder_text(self.app.t("user.fullNamePlaceholder", "Full Name"))
+        self.account_name.set_placeholder_text(
+            self.app.t("user.accountNamePlaceholder", "Account Name")
+        )
+        self.account_hint.set_label(
+            self.app.t("user.accountNameHint", "This will be the name of your home folder")
+        )
+        self.hostname.set_placeholder_text(self.app.t("user.hostnamePlaceholder", "Hostname"))
+        self.hostname_hint.set_label(
+            self.app.t("user.hostnameHint", "This will be your computer's network name")
+        )
+        self.password.set_property(
+            "placeholder-text", self.app.t("user.passwordPlaceholder", "Password")
+        )
+        self.password_confirm.set_property(
+            "placeholder-text", self.app.t("user.verifyPasswordPlaceholder", "Verify Password")
+        )
+        self._load_profile_pictures()
+        self._update_form_validity()
+
+    def _load_profile_pictures(self):
+        if self._picture_buttons:
+            return
+        paths = self.app.state.list_profile_pictures()
+        for path in paths:
+            btn = Gtk.ToggleButton()
+            btn.add_css_class("flat")
+            btn.add_css_class("profile-picture-item")
+            # "flat" alone wasn't enough - the theme's :checked state still
+            # painted its own square-cornered background/indicator behind
+            # our content (visible as a colored wedge on the selected
+            # avatar only, since that's the only one in the checked state).
+            # border-radius in CSS only clips this widget's own background/
+            # border, not arbitrary painting underneath a child - forcing
+            # overflow clipping on the button itself is what actually
+            # confines *everything* drawn inside it to the circle, theme
+            # decoration included.
+            btn.set_overflow(Gtk.Overflow.HIDDEN)
+            # GtkPicture.measure() reports the source image's intrinsic size
+            # (these are 128x128) as its natural size no matter what
+            # set_size_request() says - that's only a minimum, not a cap,
+            # and Gtk.Overflow.HIDDEN on a wrapping box only clips painting,
+            # not layout, so it doesn't stop the natural-size request from
+            # propagating either (see make_worldmap() in common.py for the
+            # same bug/fix). With 8 of these side by side that alone was
+            # enough to blow the whole card way past 800px wide. Pre-scaling
+            # the pixbuf to the exact display size is what actually fixes
+            # it: its intrinsic size *is* 80x80 now, nothing left to clip.
+            pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(path, 80, 80, True)
+            pic = Gtk.Picture.new_for_pixbuf(pixbuf)
+            pic.set_content_fit(Gtk.ContentFit.COVER)
+            pic.set_can_shrink(True)
+            btn.set_child(pic)
+            btn.connect("toggled", self._on_picture_toggled, path, btn)
+            self.pictures_row.append(btn)
+            self._picture_buttons.append(btn)
+        if self._picture_buttons:
+            self._picture_buttons[0].set_active(True)
+
+    def _on_picture_toggled(self, btn, path, this_btn):
+        if not btn.get_active():
+            return
+        for other in self._picture_buttons:
+            if other is not this_btn:
+                other.set_active(False)
+            other.remove_css_class("selected")
+        this_btn.add_css_class("selected")
+        self.selected_picture = path
+        self.app.state.select_profile_picture(path)
+        self._update_form_validity()
+
+    def _on_password_changed(self, _entry):
+        p1 = self.password.get_text()
+        p2 = self.password_confirm.get_text()
+        self.password_check.remove_css_class("match")
+        self.password_check.remove_css_class("mismatch")
+        if p1 == "" and p2 == "":
+            self.password_check.set_label("")
+        elif p1 == p2 and p1 != "":
+            self.password_check.set_label("✓ Passwords match")
+            self.password_check.add_css_class("match")
+        elif p2 != "":
+            self.password_check.set_label("✗ Passwords do not match")
+            self.password_check.add_css_class("mismatch")
+        else:
+            self.password_check.set_label("")
+        self._update_form_validity()
+
+    def _on_form_changed(self, _entry):
+        self._update_form_validity()
+
+    def _update_form_validity(self):
+        ok = (
+            self.full_name.get_text().strip() != ""
+            and self.account_name.get_text().strip() != ""
+            and self.hostname.get_text().strip() != ""
+            and self.password.get_text() != ""
+            and self.password_confirm.get_text() != ""
+            and self.password.get_text() == self.password_confirm.get_text()
+            and self.selected_picture is not None
+        )
+        self.card.forward_button.set_sensitive(ok)
+
+    def _on_back(self):
+        self.app.go_to("agreement")
+
+    def _on_continue(self):
+        err = self.app.state.save_user(
+            self.full_name.get_text(),
+            self.account_name.get_text(),
+            self.hostname.get_text(),
+            self.password.get_text(),
+            self.password_confirm.get_text(),
+            self.selected_picture,
+        )
+        if err:
+            self.app.show_alert(err)
+            return
+        self.app.go_to("look")

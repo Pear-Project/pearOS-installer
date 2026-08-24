@@ -362,8 +362,49 @@ if ! chmod -R 0777 /usr/share/extras; then
   echo "WARNING: Failed to set permissions on /usr/share/extras" >&2
 fi
 
-# Apply the dark/light look chosen on the "Choose Your Look" page to the
-# newly created user (cosmetic, non-fatal on failure).
+# Everything below this point applies choices collected by pages that ran
+# as the live 'default' user, before $USER_NAME existed as a Unix account
+# (Choose Your Look, Accessibility, Analytics, Screen Time, Touch ID). None
+# of those pages could apply their setting directly - kwriteconfig6/xkbset/
+# fprintd-enroll would have landed on 'default' and been lost when it's
+# deleted on next boot - so they only left their choice in /tmp/*. This is
+# the other half of that handoff, same idea as the profile-picture copy
+# above, just for settings instead of a file.
+USER_HOME="/home/$USER_NAME"
+AUTOSTART_DIR="$USER_HOME/.config/autostart"
+SCRIPTS_DIR="$USER_HOME/.config/pearos-scripts"
+HAVE_USER_HOME=false
+if [ -d "$USER_HOME" ]; then
+  HAVE_USER_HOME=true
+  mkdir -p "$AUTOSTART_DIR" "$SCRIPTS_DIR"
+fi
+
+# A one-shot autostart entry + script, self-deleting after it runs once -
+# the mechanism every "needs a live session" step below schedules through.
+# $1=name (used in file names), $2=script body (without the shebang line).
+schedule_first_login() {
+  local name="$1" body="$2"
+  local script="$SCRIPTS_DIR/apply-first-$name.sh"
+  local desktop="$AUTOSTART_DIR/pearos-first-$name.desktop"
+  {
+    echo "#!/bin/bash"
+    echo "$body"
+    echo "rm -f \"$desktop\""
+    echo "rm -f \"\$0\""
+  } > "$script"
+  chmod +x "$script"
+  cat > "$desktop" << EOF
+[Desktop Entry]
+Type=Application
+Exec=bash "$script"
+Hidden=false
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+Name=pearOS First $name Setup
+EOF
+}
+
+# ── Look (dark/light theme) ──────────────────────────────────────────
 echo "Applying theme preference for $USER_NAME..."
 THEME_SWITCHER="/usr/share/extras/system-settings/themeswitcher/kde-theme-switch.sh"
 THEME_STATE_FILE="/usr/share/extras/system-settings/themeswitcher/state"
@@ -388,38 +429,145 @@ echo "Theme mode to apply: $THEME_MODE"
 # to fully apply itself (GTK/Kvantum/etc components run partially otherwise).
 # The new user has no session yet at this point in the script, so instead of
 # faking one, drop a one-shot autostart entry that runs the switcher on the
-# user's own first real login, then deletes itself (script + .desktop file).
-if [ -x "$THEME_SWITCHER" ] && [ -d "/home/$USER_NAME" ]; then
-  USER_HOME="/home/$USER_NAME"
-  AUTOSTART_DIR="$USER_HOME/.config/autostart"
-  SCRIPTS_DIR="$USER_HOME/.config/pearos-scripts"
-  FIRST_THEME_SCRIPT="$SCRIPTS_DIR/apply-first-theme.sh"
-  FIRST_THEME_DESKTOP="$AUTOSTART_DIR/pearos-first-theme.desktop"
-
-  mkdir -p "$AUTOSTART_DIR" "$SCRIPTS_DIR"
-
-  cat > "$FIRST_THEME_SCRIPT" << EOF
-#!/bin/bash
-"$THEME_SWITCHER" --$THEME_MODE
-rm -f "$FIRST_THEME_DESKTOP"
-rm -f "\$0"
-EOF
-  chmod +x "$FIRST_THEME_SCRIPT"
-
-  cat > "$FIRST_THEME_DESKTOP" << EOF
-[Desktop Entry]
-Type=Application
-Exec=bash "$FIRST_THEME_SCRIPT"
-Hidden=false
-NoDisplay=true
-X-GNOME-Autostart-enabled=true
-Name=pearOS First Theme Setup
-EOF
-
-  chown -R "$USER_NAME:$USER_NAME" "$AUTOSTART_DIR" "$SCRIPTS_DIR" 2>/dev/null || true
+# user's own first real login (schedule_first_login(), defined above).
+if [ -x "$THEME_SWITCHER" ] && $HAVE_USER_HOME; then
+  schedule_first_login "theme" "\"$THEME_SWITCHER\" --$THEME_MODE"
   echo "Scheduled theme application for $USER_NAME on first login"
 else
   echo "Theme switcher not found or $USER_NAME home missing, skipping theme sync" >&2
+fi
+
+# ── Accessibility + Analytics ────────────────────────────────────────
+# kdeglobals/kcminputrc are plain files - no live session needed, so these
+# apply immediately (as $USER_NAME, into their own freshly-created home).
+if $HAVE_USER_HOME && { [ -f /tmp/accessibility_prefs ] || [ -f /tmp/analytics_prefs ]; }; then
+  echo "Applying accessibility/analytics preferences for $USER_NAME..."
+  get_pref() { grep -m1 "^$2=" "$1" 2>/dev/null | cut -d= -f2; }
+
+  REDUCE_MOTION="$(get_pref /tmp/accessibility_prefs reduce_motion)"
+  INCREASE_CONTRAST="$(get_pref /tmp/accessibility_prefs increase_contrast)"
+  LARGER_CURSOR="$(get_pref /tmp/accessibility_prefs larger_cursor)"
+  SEND_DIAGNOSTICS="$(get_pref /tmp/analytics_prefs send_diagnostics)"
+  SHARE_CRASH_DATA="$(get_pref /tmp/analytics_prefs share_crash_data)"
+
+  run_as_user() { su - "$USER_NAME" -c "$1" 2>/dev/null || true; }
+
+  [ "$REDUCE_MOTION" = "True" ] && \
+    run_as_user "kwriteconfig6 --file kdeglobals --group KDE --key AnimationDurationFactor 0"
+  [ "$INCREASE_CONTRAST" = "True" ] && \
+    run_as_user "kwriteconfig6 --file kdeglobals --group KDE --key contrast 10"
+  [ "$LARGER_CURSOR" = "True" ] && \
+    run_as_user "kwriteconfig6 --file kcminputrc --group Mouse --key cursorSize 48"
+  [ -n "$SEND_DIAGNOSTICS" ] && \
+    run_as_user "kwriteconfig6 --file kdeglobals --group Privacy --key SendDiagnostics $([ "$SEND_DIAGNOSTICS" = "True" ] && echo true || echo false)"
+  [ -n "$SHARE_CRASH_DATA" ] && \
+    run_as_user "kwriteconfig6 --file kdeglobals --group Privacy --key ShareCrashData $([ "$SHARE_CRASH_DATA" = "True" ] && echo true || echo false)"
+
+  # Sticky/Slow/Bounce/Mouse Keys + the audible bell are XKB AccessX
+  # controls, i.e. live X11-session state, not a config file - these can
+  # only take effect once $USER_NAME actually has a session, same as the
+  # theme switch above.
+  ACCESSX_CMD=""
+  add_accessx() {
+    [ "$(get_pref /tmp/accessibility_prefs "$1")" = "True" ] && ACCESSX_CMD="$ACCESSX_CMD xkbset $2;"
+  }
+  add_accessx sticky_keys sticky
+  add_accessx slow_keys slowkeys
+  add_accessx bounce_keys bouncekeys
+  add_accessx mouse_keys mousekeys
+  if [ "$(get_pref /tmp/accessibility_prefs audible_bell)" = "False" ]; then
+    ACCESSX_CMD="$ACCESSX_CMD xkbset -bell;"
+  fi
+  if [ -n "$ACCESSX_CMD" ] && $HAVE_USER_HOME; then
+    schedule_first_login "accessx" "$ACCESSX_CMD"
+    echo "Scheduled AccessX preferences for $USER_NAME on first login"
+  fi
+else
+  echo "No accessibility/analytics preferences recorded, skipping"
+fi
+
+# ── Screen Time ───────────────────────────────────────────────────────
+if [ "$(cat /tmp/screentime_enabled 2>/dev/null)" = "true" ] && $HAVE_USER_HOME; then
+  echo "Setting up Screen Time for $USER_NAME..."
+  ST_DATA_DIR="$USER_HOME/.local/share/pearos-settings"
+  ST_COLLECTOR="$ST_DATA_DIR/screentime-collector.py"
+  ST_KWIN="$ST_DATA_DIR/screentime-kwin.js"
+  ST_SYSTEMD_DIR="$USER_HOME/.config/systemd/user"
+  ST_SERVICE="$ST_SYSTEMD_DIR/pearos-screentime.service"
+
+  mkdir -p "$ST_DATA_DIR" "$ST_SYSTEMD_DIR"
+  cp "$DIR/first_login_assets/screentime-collector.py" "$ST_COLLECTOR"
+  chmod +x "$ST_COLLECTOR"
+  cp "$DIR/first_login_assets/screentime-kwin.js" "$ST_KWIN"
+  cat > "$ST_SERVICE" << EOF
+[Unit]
+Description=PearOS Screen Time collector
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 "$ST_COLLECTOR"
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=graphical-session.target
+EOF
+  chown -R "$USER_NAME:$USER_NAME" "$ST_DATA_DIR" "$ST_SYSTEMD_DIR"
+
+  # Loading the KWin script and enabling the systemd --user unit both need
+  # a live session (D-Bus, systemd --user instance) - defer to first login.
+  schedule_first_login "screentime" "
+qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.unloadScript pearos-screentime >/dev/null 2>&1
+qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.loadScript \"$ST_KWIN\" pearos-screentime >/dev/null 2>&1
+qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.start >/dev/null 2>&1
+systemctl --user daemon-reload
+systemctl --user enable --now pearos-screentime.service >/dev/null 2>&1
+"
+  echo "Scheduled Screen Time activation for $USER_NAME on first login"
+fi
+
+# ── Touch ID ──────────────────────────────────────────────────────────
+# The fingerprint was necessarily enrolled under 'default' during the
+# wizard (see pages/touchid_setup.py's docstring for why) - migrate
+# fprintd's on-disk print data to the real user, same idea as the profile
+# picture copy. Non-fatal: if fprintd's storage layout ever changes and
+# this copy does nothing useful, the user can just re-enroll from Settings.
+if [ "$(cat /tmp/touchid_enabled 2>/dev/null)" = "true" ] && $HAVE_USER_HOME; then
+  echo "Migrating Touch ID enrollment to $USER_NAME..."
+  if [ -d /var/lib/fprint/default ] && [ -n "$(ls -A /var/lib/fprint/default 2>/dev/null)" ]; then
+    if mkdir -p "/var/lib/fprint/$USER_NAME" && \
+       cp -r /var/lib/fprint/default/. "/var/lib/fprint/$USER_NAME/" 2>/dev/null; then
+      echo "Touch ID enrollment migrated to $USER_NAME"
+    else
+      echo "WARNING: Failed to migrate Touch ID enrollment to $USER_NAME" >&2
+    fi
+  else
+    echo "WARNING: Touch ID was enabled but no enrollment data found under 'default'" >&2
+  fi
+fi
+
+# ── PearID ────────────────────────────────────────────────────────────
+# Same problem as Touch ID: signing in during the wizard (pages/pearid.py)
+# necessarily happens as 'default', and pearID/token_storage.sh saves the
+# session token to whichever of these two places it picked - a keyring
+# entry scoped to 'default's own login session (nothing to migrate, that
+# session is gone), or, if no secret service was available, a plain file
+# at ~/.pearid_token. Only the file case is migratable; best-effort, same
+# as the fprintd copy above - if it was the keyring, the new user just
+# ends up signed out and can sign back in from Settings.
+if $HAVE_USER_HOME && [ -f /home/default/.pearid_token ]; then
+  echo "Migrating PearID session to $USER_NAME..."
+  if cp /home/default/.pearid_token "$USER_HOME/.pearid_token" 2>/dev/null; then
+    chmod 600 "$USER_HOME/.pearid_token"
+    chown "$USER_NAME:$USER_NAME" "$USER_HOME/.pearid_token"
+    echo "PearID session migrated to $USER_NAME"
+  else
+    echo "WARNING: Failed to migrate PearID session to $USER_NAME" >&2
+  fi
+fi
+
+if $HAVE_USER_HOME; then
+  chown -R "$USER_NAME:$USER_NAME" "$AUTOSTART_DIR" "$SCRIPTS_DIR" 2>/dev/null || true
 fi
 
 # Remove useless packages and their desktop entries

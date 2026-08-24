@@ -1,0 +1,368 @@
+/* GTK4 port of app/css/assistant-styles.css. Selectors target CSS classes
+   applied explicitly to widgets in pages/*.py (GTK CSS has no element-type
+   selectors for custom widgets, so everything is done through .class-name,
+   same as the original stylesheet already mostly did).
+
+   Design tokens (GTK CSS has no custom-property/var() support, so these
+   are documented here and applied as literals - keep new rules on this
+   scale instead of picking a new radius/size by eye):
+
+   border-radius:
+     8px   - small/tight elements: list rows, preview thumbnails, small
+             frames/boxes (.wizard-list row, .look-preview, .error-box,
+             .debug-share-qr)
+     12px  - standard containers (.wizard-list, .debug-share-box)
+     16px  - top-level panels/cards (.app, .look-option)
+     999px - true pills: circular avatars, pill buttons/inputs
+             (.textbox, .nav-button, .profile-picture-item)
+     Nesting follows the tier order (a container's radius is always >=
+     the radius of whatever's directly inside it).
+
+   font-size (macOS-ish type ramp, already mostly followed - keep new text
+   on one of these, don't introduce a new in-between size):
+     20px - page title (.title)
+     14px - control/input text (.textbox, .look-option-label)
+     13px - body text (.description, .password-check, .license, etc.)
+     12px - secondary/callout text (.debug-share-body, .test-banner)
+     11px - captions (.progress-log-toggle, .debug-share-url)
+     10px - footnotes (.progress-log) */
+
+window {
+  background-color: #000000;
+}
+
+label {
+  font-family: "Sen";
+  font-size: 14px;
+  color: #1d1d1f;
+}
+
+window.dark-mode label {
+  color: #f2f2f2;
+}
+
+.app {
+  background-color: #ffffff;
+  border-radius: 16px;
+}
+
+window.dark-mode .app {
+  background-color: #1e1f24;
+}
+
+.title {
+  font-family: "Sen";
+  font-weight: 900;
+  font-size: 20px;
+  color: #333333;
+}
+
+window.dark-mode .title {
+  color: #f2f2f2;
+}
+
+.description,
+.account-name-hint,
+.look-note,
+.profile-picture-heading {
+  font-family: "Sen";
+  font-size: 13px;
+  color: #818181;
+}
+
+window.dark-mode .description,
+window.dark-mode .account-name-hint,
+window.dark-mode .look-note,
+window.dark-mode .profile-picture-heading {
+  color: #9a9aa2;
+}
+
+/* ── Lists (language / keymap / timezone) ─────────────────────────────
+   Colors pulled from the real pearOS GTK4 theme
+   (dpkg/pearos-settings/usr/share/themes/pearOS{,-dark}/gtk-4.0/gtk.css):
+   view_bg_color, window_fg_color, accent_bg_color, borders. */
+.wizard-list {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  background-color: #ffffff; /* view_bg_color (light) */
+}
+
+window.dark-mode .wizard-list {
+  background-color: #242424; /* view_bg_color (dark) */
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.wizard-list row {
+  padding: 6px 10px;
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: #363636; /* window_fg_color (light) */
+}
+
+window.dark-mode .wizard-list row {
+  background-color: #242424;
+  color: #ffffff; /* window_fg_color (dark) */
+}
+
+.wizard-list row:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+window.dark-mode .wizard-list row:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.wizard-list row:selected {
+  background-color: #0088ff; /* accent_bg_color */
+  color: #ffffff; /* accent_fg_color */
+}
+
+/* ── Buttons ───────────────────────────────────────────────────────── */
+.nav-button {
+  background-color: #ffffff;
+  color: #2b2b2b;
+  border-radius: 999px;
+  padding: 8px 20px;
+  font-family: "Sen";
+  font-size: 15px;
+  box-shadow: -1px 11px 20px 1px rgba(0, 0, 0, 0.24);
+}
+
+.nav-button:hover {
+  opacity: 0.8;
+}
+
+.nav-button:disabled {
+  opacity: 0.5;
+}
+
+window.dark-mode .nav-button {
+  background-color: #3a3b42;
+  color: #f2f2f2;
+}
+
+.back-button {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 12px;
+  min-width: 40px;
+  min-height: 40px;
+}
+
+.back-button:hover {
+  opacity: 0.7;
+}
+
+.back-arrow {
+  color: #0570fb;
+}
+
+window.dark-mode .back-arrow {
+  color: #57a2ff;
+}
+
+/* ── Text entries ──────────────────────────────────────────────────── */
+.textbox {
+  min-width: 300px;
+  min-height: 16px;
+  padding: 7px 16px;
+  font-size: 14px;
+  border: 1px solid #c5c5c5;
+  border-radius: 999px; /* pill-shaped, like macOS text fields */
+  background-color: #fbfbfb;
+  color: #1d1d1f;
+  caret-color: #1d1d1f;
+}
+
+/* `color` cascades down onto GtkText's placeholder subnode too unless
+   overridden here, so the placeholder was rendering in the same near-black
+   as real typed text instead of a dimmed hint color. */
+.textbox text placeholder {
+  color: #9a9a9e;
+}
+
+window.dark-mode .textbox text placeholder {
+  color: #8b8b93;
+}
+
+.textbox:focus {
+  border-color: #57a2ff;
+  box-shadow: 0 0 0 3px rgba(87, 162, 255, 0.1);
+}
+
+window.dark-mode .textbox {
+  background-color: #2a2b31;
+  border-color: #3d3e46;
+  caret-color: #f2f2f2;
+  color: #f2f2f2;
+}
+
+.textbox-half {
+  min-width: 142px;
+}
+
+.password-check {
+  font-size: 13px;
+  min-height: 20px;
+}
+
+.password-check.match {
+  color: #28a745;
+}
+
+.password-check.mismatch {
+  color: #dc3545;
+}
+
+/* ── Profile pictures ─────────────────────────────────────────────── */
+.profile-picture-item {
+  min-width: 80px;
+  min-height: 80px;
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-color: #f0f0f0;
+  padding: 0;
+}
+
+.profile-picture-item:hover {
+  border-color: #57a2ff;
+}
+
+.profile-picture-item.selected {
+  border-color: #0570fb;
+}
+
+/* ── Look picker ───────────────────────────────────────────────────── */
+.look-option {
+  border-radius: 16px;
+  border: 3px solid transparent;
+  padding: 10px;
+}
+
+.look-option:hover {
+  border-color: #57a2ff;
+}
+
+.look-option.selected {
+  border-color: #0570fb;
+}
+
+.look-preview {
+  border-radius: 8px;
+  min-width: 160px;
+  min-height: 100px;
+}
+
+.look-preview-light {
+  background: linear-gradient(160deg, #e8ecf3 0%, #cfd8e6 100%);
+}
+
+.look-preview-dark {
+  background: linear-gradient(160deg, #2b2f38 0%, #15171c 100%);
+}
+
+.look-option-label {
+  font-family: "Sen";
+  font-size: 14px;
+  color: #333333;
+}
+
+window.dark-mode .look-option-label {
+  color: #e6e6e6;
+}
+
+/* ── Terms and conditions ─────────────────────────────────────────── */
+.license textview {
+  color: #808080;
+  font-size: 13px;
+}
+
+window.dark-mode .license textview {
+  color: #b0b0b8;
+}
+
+.license textview text {
+  background-color: transparent;
+}
+
+/* ── Timezone UTC checkbox row ────────────────────────────────────── */
+.utc-toggle label {
+  font-family: "Sen";
+  font-size: 13px;
+  color: #333333;
+}
+
+window.dark-mode .utc-toggle label {
+  color: #e6e6e6;
+}
+
+/* ── Finish page progress panel ───────────────────────────────────── */
+.progress-panel {
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 16px 24px;
+}
+
+.progress-status {
+  color: #ffffff;
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.progress-log {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 10px;
+}
+
+.progress-log text {
+  background-color: transparent;
+}
+
+.progress-log-toggle {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+}
+
+.error-box {
+  color: #ff6666;
+  background-color: rgba(0, 0, 0, 0.6);
+  border-radius: 8px;
+  padding: 15px;
+  font-size: 13px;
+}
+
+.debug-share-box {
+  background-color: rgba(0, 0, 0, 0.6);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.debug-share-title {
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.debug-share-body {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 12px;
+}
+
+.debug-share-url {
+  color: #7ab8ff;
+  font-size: 11px;
+  font-family: monospace;
+}
+
+.debug-share-qr {
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.test-banner {
+  background-color: #ff9800;
+  color: #000000;
+  padding: 6px;
+  font-size: 12px;
+}
