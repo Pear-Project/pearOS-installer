@@ -3,6 +3,7 @@ window; a Gtk.Stack holds the 4 real pages; single-instance behavior comes
 for free from GApplication's application-id uniqueness (mirrors
 requestSingleInstanceLock() + 'second-instance' focus-stealing in main.js)."""
 import os
+import subprocess
 import sys
 
 import gi
@@ -29,6 +30,13 @@ class InstallerApp(Gtk.Application):
         self.stack = None
         self.current_locale = "en"
         self._i18n_cache = {}
+        # Old Electron main.js used to killall plasmashell on app-ready
+        # (removed in commit e676698, "stop closing plasma after starting
+        # installer") with no restart counterpart - restored here, plus
+        # the missing restart-on-quit half, matching this app's own full
+        # lifecycle instead of leaving the desktop shell dead if the
+        # installer window is ever closed without proceeding to install.
+        self.connect("shutdown", self._on_shutdown)
 
     def i18n_for(self, locale):
         i18n = self._i18n_cache.get(locale)
@@ -46,11 +54,23 @@ class InstallerApp(Gtk.Application):
         if on_show:
             on_show()
 
+    def _on_shutdown(self, _app):
+        if state_mod.IS_TEST_MODE:
+            return
+        # Detached: plasmashell takes a moment to come back up, and
+        # nothing here needs to wait for or react to that.
+        subprocess.Popen(
+            ["plasmashell"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True
+        )
+
     # ── GApplication lifecycle ────────────────────────────────────────
     def do_activate(self):
         if self.window is not None:
             self.window.present()
             return
+
+        if not state_mod.IS_TEST_MODE:
+            subprocess.run(["killall", "plasmashell"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
         fonts.register_all()
 

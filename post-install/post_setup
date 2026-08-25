@@ -151,15 +151,22 @@ if ! ln -sf /usr/share/zoneinfo/"$ZONE" /etc/localtime; then
   error_exit "Failed to set timezone: $ZONE"
 fi
 
-# Enable or disable UTC time
+# Enable or disable UTC time. Not fatal - VMs (this ran under
+# $hypervisor, from systemd-detect-virt) commonly have no real RTC
+# device (/dev/rtc0) at all, so hwclock legitimately fails there; the
+# system clock itself is already correct regardless (inherited from the
+# live session / NTP), only the hardware clock's own persistence across
+# a future reboot is affected, which isn't worth failing the whole OOBE
+# over. Matches the WARNING-and-continue pattern already used above for
+# localectl/loadkeys.
 echo "Configuring hardware clock..."
 if $utc_enabled; then
   if ! hwclock --systohc --utc; then
-    error_exit "Failed to set hardware clock to UTC"
+    echo "WARNING: hwclock could not sync to UTC (hypervisor=$hypervisor) - probably no real RTC device available; system clock is unaffected."
   fi
 else
   if ! hwclock --systohc --localtime; then
-    error_exit "Failed to set hardware clock to localtime"
+    echo "WARNING: hwclock could not sync to localtime (hypervisor=$hypervisor) - probably no real RTC device available; system clock is unaffected."
   fi
 fi
 

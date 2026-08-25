@@ -3,6 +3,7 @@ window; a Gtk.Stack holds one page per wizard step; single-instance behavior
 comes for free from GApplication's application-id uniqueness (mirrors
 requestSingleInstanceLock() + 'second-instance' focus-stealing in main.js)."""
 import os
+import subprocess
 import sys
 
 # Gsk.GLShader (used by pages/hello.py for the liquid-gel lettering effect)
@@ -42,6 +43,12 @@ class WizardApp(Gtk.Application):
         self.i18n = I18n("en_US")
         self.pages = {}
         self.stack = None
+        # Matches system_install's own installer window - kill the
+        # desktop shell while this wizard's own fullscreen window is up,
+        # bring it back however this app eventually exits (finishing the
+        # wizard normally, Quit, or an abnormal window close all funnel
+        # through GApplication's "shutdown" signal).
+        self.connect("shutdown", self._on_shutdown)
 
     # ── i18n / theming helpers used by page modules ──────────────────
     def t(self, key, default=None):
@@ -69,11 +76,21 @@ class WizardApp(Gtk.Application):
         if on_show:
             on_show()
 
+    def _on_shutdown(self, _app):
+        if state_mod.IS_TEST_MODE:
+            return
+        subprocess.Popen(
+            ["plasmashell"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True
+        )
+
     # ── GApplication lifecycle ────────────────────────────────────────
     def do_activate(self):
         if self.window is not None:
             self.window.present()
             return
+
+        if not state_mod.IS_TEST_MODE:
+            subprocess.run(["killall", "plasmashell"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
         fonts.register_all()
 
@@ -99,6 +116,15 @@ class WizardApp(Gtk.Application):
             self.window.set_default_size(geo.width, geo.height)
 
         theme_mode = state_mod.read_tmp("theme_mode")
+        if theme_mode is None:
+            # No explicit choice made yet (the "look" page hasn't been
+            # reached/completed) - every page up to that point used to
+            # default to light regardless, clashing with the session's
+            # actual dark native widgets (checkboxes, comboboxes, ...).
+            # look.py's own on_show() already calls this same method to
+            # preselect its light/dark option; __main__ just never did,
+            # for the window-wide dark-mode class itself.
+            theme_mode = self.state.detect_default_look_mode()
         self.set_dark_mode(theme_mode == "dark")
 
         root_overlay = Gtk.Overlay()
