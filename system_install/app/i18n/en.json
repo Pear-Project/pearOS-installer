@@ -23,8 +23,8 @@
       "desc": "Browse for support to get help with your Computer"
     },
     "gparted": {
-      "title": "Disk Utility",
-      "desc": "Repair or erase a disk using Disk Utility"
+      "title": "GParted",
+      "desc": "Repair or erase a disk using GParted"
     },
     "continue": "Continue"
   },

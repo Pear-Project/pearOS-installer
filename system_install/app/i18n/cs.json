@@ -23,8 +23,8 @@
       "desc": "Procházejte podporu pro získání pomoci s vaším počítačem"
     },
     "gparted": {
-      "title": "Disk Utility",
-      "desc": "Opravte nebo vymažte disk pomocí Disk Utility"
+      "title": "GParted",
+      "desc": "Opravte nebo vymažte disk pomocí GParted"
     },
     "continue": "Pokračovat"
   },
