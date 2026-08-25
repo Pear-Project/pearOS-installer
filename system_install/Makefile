@@ -1,4 +1,4 @@
 build:
-	cd frontend && npm start
+	python3 -m gtkapp
 clean:
 	exit

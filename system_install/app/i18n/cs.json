@@ -1,0 +1,59 @@
+{
+  "_meta": { "displayName": "Czech" },
+  "window_title": {
+    "menu": "Instalátor pearOS NiceC0re",
+    "examining": "Instalátor pearOS NiceC0re",
+    "confirm": "pearOS NiceC0re Instalátor"
+  },
+  "examining": {
+    "title": "Obnova systému pearOS",
+    "status": "Zkoumání svazků..."
+  },
+  "menu": {
+    "packup": {
+      "title": "Obnovit z Time Machine",
+      "desc": "Pokud máte zálohu systému, kterou chcete obnovit"
+    },
+    "installer": {
+      "title": "Nainstalovat pearOS NiceC0re",
+      "desc": "Použijte instalátor k upgradu, instalaci nebo dual bootu pearOS."
+    },
+    "browser": {
+      "title": "Webový prohlížeč",
+      "desc": "Procházejte podporu pro získání pomoci s vaším počítačem"
+    },
+    "gparted": {
+      "title": "GParted",
+      "desc": "Opravte nebo vymažte disk pomocí GParted"
+    },
+    "continue": "Pokračovat"
+  },
+  "confirm": {
+    "welcome": {
+      "title": "pearOS NiceC0re",
+      "text": "Pro nastavení instalace systému pearOS NiceC0re klikněte na Pokračovat."
+    },
+    "eula": {
+      "title": "Podmínky použití",
+      "description": "Důležité: Používání vašeho počítače pearOS, softwaru pearOS a souvisejících služeb se řídí těmito\nPodmínkami použití. Prosíme, přečtěte si je pečlivě.",
+      "file": "eula_cs.txt"
+    },
+    "disk": {
+      "title": "pearOS NiceC0re",
+      "text": "Vyberte disk, na který chcete nainstalovat pearOS NiceC0re."
+    },
+    "back": "Zpět",
+    "continue": "Pokračovat"
+  },
+  "progress": {
+    "title": "pearOS NiceC0re",
+    "close": "Zavřít",
+    "disk_text": "pearOS NiceC0re bude nainstalován na disk:",
+    "disk_text_named": "pearOS NiceC0re bude nainstalován na disk \"{disk}\":",
+    "eta_calculating": "Zbývající čas: Výpočet...",
+    "eta_prefix": "Zbývající čas: {time}",
+    "finished_ok": "Instalace byla úspěšně dokončena!\nMůžete zavřít toto okno a restartovat svůj nový pearintosh, nebo zkontrolovat protokol na ploše.",
+    "finished_warnings": "Instalace dokončena s {count} varováními.\nNěkteré balíčky se nepodařilo nainstalovat. Můžete zavřít toto okno a restartovat, nebo zkontrolovat protokoly: /home/liveuser/Desktop/install.log a /tmp/failed_packages.log",
+    "failed": "Instalace selhala!\nChyba: {error}\nZkontrolujte prosím /home/liveuser/Desktop/install.log pro podrobnosti. Možná budete muset restartovat instalátor nebo zkontrolovat disk."
+  }
+}

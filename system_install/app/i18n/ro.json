@@ -1,0 +1,59 @@
+{
+  "_meta": { "displayName": "Romanian" },
+  "window_title": {
+    "menu": "Instalator pearOS NiceC0re",
+    "examining": "pearOS NiceC0re Installer",
+    "confirm": "pearOS NiceC0re Installer"
+  },
+  "examining": {
+    "title": "pearOS Recovery",
+    "status": "Examining volumes..."
+  },
+  "menu": {
+    "packup": {
+      "title": "Restaurează din Time Machine",
+      "desc": "Dacă ai o copie de siguranță a sistemului pe care vrei să o restaurezi"
+    },
+    "installer": {
+      "title": "Instalează pearOS NiceC0re",
+      "desc": "Folosește instalatorul pentru a actualiza, instala sau face dual boot cu pearOS."
+    },
+    "browser": {
+      "title": "Browser Web",
+      "desc": "Navighează pentru suport pentru a obține ajutor cu computerul tău"
+    },
+    "gparted": {
+      "title": "GParted",
+      "desc": "Repară sau șterge un disc folosind GParted"
+    },
+    "continue": "Continuă"
+  },
+  "confirm": {
+    "welcome": {
+      "title": "pearOS NiceC0re",
+      "text": "To setup the installation of the pearOS NiceC0re, click Continue."
+    },
+    "eula": {
+      "title": "Terms and Conditions",
+      "description": "Important: Use of your pearOS Computer, the pearOS software and related servoces is subject to these\nTerms and Conditions. Please read them carefully",
+      "file": "eula_en.txt"
+    },
+    "disk": {
+      "title": "pearOS NiceC0re",
+      "text": "Select the disk where you want to install pearOS NiceC0re"
+    },
+    "back": "Back",
+    "continue": "Continue"
+  },
+  "progress": {
+    "title": "pearOS NiceC0re",
+    "close": "Close",
+    "disk_text": "pearOS NiceC0re will be installed on the disk:",
+    "disk_text_named": "pearOS NiceC0re will be installed on the disk \"{disk}\":",
+    "eta_calculating": "Estimated time remaining: Calculating...",
+    "eta_prefix": "Estimated time remaining: {time}",
+    "finished_ok": "Installation finished successfully!\nYou can close this window and reboot your new pearintosh, or check the log located on the desktop.",
+    "finished_warnings": "Installation finished with {count} warning(s).\nSome packages failed to install. You can close this window and reboot, or check the logs: /home/liveuser/Desktop/install.log and /tmp/failed_packages.log",
+    "failed": "Installation Failed!\nError: {error}\nPlease check /home/liveuser/Desktop/install.log for details. You may need to restart the installer or check your disk."
+  }
+}

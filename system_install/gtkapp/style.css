@@ -1,0 +1,401 @@
+/* GTK4 port of frontend/app/css/assistant-styles.css. Pixel/behavior-exact
+   port - values below are copied straight from the original stylesheet, not
+   redesigned. Selectors target CSS classes applied explicitly to widgets in
+   pages/*.py (GTK CSS has no element-type selectors for custom widgets). */
+
+window {
+  background-color: #0f110e;
+}
+
+/* The original body{} never sets `color` - text with no more specific rule
+   (e.g. .description) inherits the browser's UA default, which is black,
+   near-invisible on this dark background. That's real, already-shipped
+   behavior - but GTK CSS has no equivalent of "inherit unless a more
+   specific rule matches this exact node": a base `label { color: black }`
+   here would win over a *parent's* explicit color (e.g. a white button
+   label) too, since a direct rule on a node always beats an inherited
+   one, breaking every other button/label's text in the process. Every
+   real label in this app already has its own explicit color class, so
+   there's no live case left that actually needs the black default - not
+   worth reintroducing for one already-unreachable tab's text.*/
+label {
+  font-family: "Sen";
+  font-size: 14px;
+}
+
+.title {
+  font-family: "Sen";
+  font-weight: 900;
+  font-size: 41px;
+  color: #dfdfdf;
+}
+
+.setup-text {
+  color: #ffffff;
+}
+
+/* Real macOS Setup Assistant/Installer welcome screen uses a much smaller
+   title relative to the card than every other title in this app. */
+.welcome-title {
+  font-size: 24px;
+}
+
+/* The classic macOS "Continue" accent button (Setup Assistant/Installer
+   first screen): small, blue-filled, modest corner radius - distinct
+   from this app's own capsule nav-button style used everywhere else. */
+.welcome-continue-button {
+  background-color: #0a84ff;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 16px;
+  min-height: 22px;
+  font-size: 13px;
+}
+
+.license-text {
+  color: #808080;
+  font-size: 14px;
+}
+
+.eula-description {
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+/* ── Cards ─────────────────────────────────────────────────────────── */
+/* Values measured directly (pixel sampling + corner zoom, ImageMagick)
+   off real macOS Recovery screenshots, not guessed or taken from an
+   official-but-wrong-era API number - the user's reference screenshots
+   are all Sonoma-style, and measuring beat assuming Tahoe (26px/30px)
+   applied. Corner-radius scale, still following Apple's own "concentric
+   corners" principle (nested radius = parent's radius minus its distance
+   from the parent's edge):
+     12px  - top-level cards: .app, .menu-card (measured ~9-10px at this
+             card's actual width, rounded to the nearest clean value)
+     8px   - content nested inside a card, or independent floating
+             sheets/dropdowns at a comparable size: .menu-row, .disk-button,
+             .logo-menu, .about-modal
+     4px   - small inline controls: .menubar-item
+     999px - pills, for every real button - the reference's own Continue
+             button is fully rounded (radius = half its height), same
+             visual result as this */
+.app {
+  background-color: #282828;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.6);
+}
+
+.app.page-install-wrapper {
+  border: 1px solid #ffffff14;
+}
+
+.menu-card {
+  background-color: #282828;
+  border-radius: 12px;
+  border: 1px solid #ffffff14;
+}
+
+/* ── Language list ─────────────────────────────────────────────────── */
+/* Real macOS lists (Setup Assistant's language/region pickers included):
+   rounded container, generously-padded rows, and a selection highlight
+   that's its own inset rounded shape rather than a flat rect flush with
+   the list's edges - not just a bordered box of edge-to-edge rows. */
+.wizard-list {
+  border: 1px solid #383838;
+  border-radius: 8px;
+  background-color: #040404;
+}
+
+.wizard-list:focus-within {
+  border-color: #57a2ff88;
+}
+
+.wizard-list list {
+  padding: 8px;
+  background-color: transparent;
+}
+
+.wizard-list row {
+  padding: 8px 16px;
+  margin: 1px 0;
+  border-radius: 8px;
+  color: #dedede;
+}
+
+.wizard-list row:selected {
+  background-color: #4a8fdd;
+  color: #ffffff;
+}
+
+.wizard-list:focus row:selected {
+  background-color: #57a2ff;
+  color: #ffffff;
+}
+
+/* ── Buttons ───────────────────────────────────────────────────────── */
+/* Without this, the theme's default button padding/border adds on top of
+   the 30x30 request (a minimum, not a cap) and the child Picture, making
+   the actual clickable/visible button much bigger than the original PNG's
+   30x30 footprint. */
+.arrow-button {
+  padding: 0;
+  border: none;
+  min-width: 30px;
+  min-height: 30px;
+}
+
+/* Target: ~28px total height (Apple's own published regular-control
+   minimum), measured on an actual screenshot after the fact, not assumed.
+   The previous version stacked 12px vertical padding *on top of*
+   min-height: 28px - since min-height is a floor, not a cap, that made
+   the real rendered button ~53px tall (measured via pixel sampling), way
+   past the 28px it was supposed to be capped at. Padding here is chosen
+   so padding + text content lands at ~28px on its own, with min-height as
+   a backstop, not an addition. */
+.install-button-agreement {
+  background-color: #232323;
+  color: #ffffff;
+  border: none;
+  border-radius: 999px;
+  padding: 5px 16px;
+  min-height: 28px;
+}
+
+.install-button-agreement:disabled {
+  background-color: #1a1a1a;
+  color: #666666;
+}
+
+/* Secondary action (Back) - neutral, doesn't compete with Continue.
+   border: none is required here - it's not decorative, it's covering the
+   desktop GTK theme's (Breeze, on this KDE session) default focus
+   indication, which turned out to be a literal `border-color` change on
+   `button:focus`, not an outline or box-shadow (confirmed by zooming a
+   screenshot: a thin 1px accent-blue ring hugging the button's own
+   border-radius, not a fuzzy glow offset outside it - `outline`/
+   `box-shadow` overrides had zero effect on it for exactly that reason). */
+.nav-button {
+  background-color: #3d3d3d;
+  color: #ffffff;
+  border: none;
+  border-radius: 999px;
+  padding: 5px 16px;
+  min-height: 28px;
+}
+
+/* Primary/default action (Continue) - accent blue, matches the same blue
+   used for the welcome tab's own Continue button and this app's other
+   selection-accent color (.wizard-list row:selected). */
+.nav-button-primary {
+  background-color: #0a84ff;
+  color: #ffffff;
+  border: none;
+  border-radius: 999px;
+  padding: 5px 16px;
+  min-height: 28px;
+}
+
+.modal-button {
+  background-color: #ffffff;
+  color: #000000;
+  border: none;
+  border-radius: 999px;
+  padding: 5px 16px;
+  min-height: 28px;
+}
+
+/* Same fix as .logo-menu-item's :focus rule above, different symptom:
+   these buttons already set their own background unconditionally, so
+   GTK's default focus state showed up as a colored ring/outline around
+   the pill instead of a fill change - the theme's default focus
+   indicator, drawn on whichever widget happens to get initial keyboard
+   focus when a page opens (not something a real click/hover produced).
+   Real macOS doesn't draw this on a plain page load either. */
+button.install-button-agreement:focus,
+button.nav-button:focus,
+button.nav-button-primary:focus,
+button.modal-button:focus,
+button.arrow-button:focus,
+button.welcome-continue-button:focus,
+button.install-button-agreement:focus-visible,
+button.nav-button:focus-visible,
+button.nav-button-primary:focus-visible,
+button.modal-button:focus-visible,
+button.arrow-button:focus-visible,
+button.welcome-continue-button:focus-visible {
+  outline-style: none;
+  outline-width: 0;
+  outline-color: transparent;
+  box-shadow: none;
+}
+
+/* ── Recovery menu rows ───────────────────────────────────────────── */
+.menu-row {
+  background-color: transparent;
+  border-radius: 8px;
+  padding: 16px;
+  color: #ffffff;
+}
+
+.menu-row.checked {
+  background-color: #3d3d3d;
+}
+
+.menu-row-title {
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.menu-row-desc {
+  color: #ffffff;
+  font-size: 16px;
+}
+
+/* ── Disk-select tab ──────────────────────────────────────────────── */
+.disk-button {
+  background-color: transparent;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.disk-button.selected {
+  background-color: #484f4e;
+}
+
+.disk-title {
+  color: #ffffff;
+  font-size: 12px;
+}
+
+/* ── Spinner (examining page) ────────────────────────────────────── */
+.examining-title {
+  color: #616461;
+  font-family: "Sen";
+  font-weight: 900;
+  font-size: 41px;
+}
+
+.examining-status {
+  color: #ffffff;
+  font-size: 14px;
+}
+
+/* ── Navbar (taskbar) ─────────────────────────────────────────────── */
+.taskbar {
+  background-color: #202020;
+  border-bottom: 1px solid #ffffff11;
+}
+
+.taskbar-label {
+  color: #ffffffdd;
+  font-size: 12px;
+}
+
+.taskbar-app-name {
+  font-weight: bold;
+}
+
+/* No :hover rule on purpose - real macOS menu-bar items only highlight
+   once a menu is open (click), not on plain mouseover. .open is toggled
+   programmatically from the popover's show/closed signals instead. */
+.menubar-item {
+  color: #ffffffdd;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.menubar-item.open {
+  background-color: #ffffff33;
+}
+
+.logo-menu {
+  background-color: #2c2c2cee;
+  border-radius: 8px;
+  border: 1px solid #ffffff22;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.logo-menu-item {
+  color: #ffffffdd;
+  background-color: transparent;
+  padding: 12px 16px;
+  font-size: 13px;
+  outline: none;
+  box-shadow: none;
+}
+
+.logo-menu-item:hover {
+  background-color: #ffffff22;
+}
+
+/* GTK auto-focuses the first focusable child when a popover opens, and
+   the theme's own default button:focus rule fills that with an accent
+   color - which is why "About pearOS Installer" showed up pre-highlighted
+   the instant the menu opened, before any real hover. Real macOS menus
+   never pre-select an item on open. Forcing :focus back to the same
+   transparent/hover-only look this row already has fixes it. */
+.logo-menu-item:focus {
+  background-color: transparent;
+  outline: none;
+  box-shadow: none;
+}
+
+.logo-menu-item:focus:hover {
+  background-color: #ffffff22;
+}
+
+/* ── About modal ──────────────────────────────────────────────────── */
+.about-modal {
+  background-color: #2c2c2cee;
+  border-radius: 8px;
+  border: 1px solid #ffffff22;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+}
+
+.about-modal-title {
+  color: #ffffff;
+  font-size: 21px;
+}
+
+.about-modal-text {
+  color: #ffffffdd;
+  font-size: 14px;
+}
+
+/* ── Install progress ─────────────────────────────────────────────── */
+/* macOS-style progress bar: thin, fully rounded, accent-blue fill on a
+   dark track - not the browser default <progress> look the old
+   pre-Calamares JS version relied on. */
+.install-progress-bar {
+  min-height: 6px;
+}
+
+.install-progress-bar trough {
+  background-color: #3d3d3d;
+  border-radius: 999px;
+  min-height: 6px;
+}
+
+.install-progress-bar progress {
+  background-color: #0a84ff;
+  border-radius: 999px;
+  min-height: 6px;
+}
+
+.progress-status-success {
+  color: #32d74b;
+}
+
+.progress-status-warning {
+  color: #ff9f0a;
+}
+
+.progress-status-error {
+  color: #ff453a;
+}

@@ -1,0 +1,59 @@
+{
+  "_meta": { "displayName": "English" },
+  "window_title": {
+    "menu": "pearOS NiceC0re Installer",
+    "examining": "pearOS NiceC0re Installer",
+    "confirm": "pearOS NiceC0re Installer"
+  },
+  "examining": {
+    "title": "pearOS Recovery",
+    "status": "Examining volumes..."
+  },
+  "menu": {
+    "packup": {
+      "title": "Restore from Time Machine",
+      "desc": "If you have packup of your system that you want to restore"
+    },
+    "installer": {
+      "title": "Install pearOS NiceC0re",
+      "desc": "Use the installer to Upgrade, Install or Dual Boot pearOS."
+    },
+    "browser": {
+      "title": "Web Browser",
+      "desc": "Browse for support to get help with your Computer"
+    },
+    "gparted": {
+      "title": "GParted",
+      "desc": "Repair or erase a disk using GParted"
+    },
+    "continue": "Continue"
+  },
+  "confirm": {
+    "welcome": {
+      "title": "pearOS NiceC0re",
+      "text": "To setup the installation of the pearOS NiceC0re, click Continue."
+    },
+    "eula": {
+      "title": "Terms and Conditions",
+      "description": "Important: Use of your pearOS Computer, the pearOS software and related servoces is subject to these\nTerms and Conditions. Please read them carefully",
+      "file": "eula_en.txt"
+    },
+    "disk": {
+      "title": "pearOS NiceC0re",
+      "text": "Select the disk where you want to install pearOS NiceC0re"
+    },
+    "back": "Back",
+    "continue": "Continue"
+  },
+  "progress": {
+    "title": "pearOS NiceC0re",
+    "close": "Close",
+    "disk_text": "pearOS NiceC0re will be installed on the disk:",
+    "disk_text_named": "pearOS NiceC0re will be installed on the disk \"{disk}\":",
+    "eta_calculating": "Estimated time remaining: Calculating...",
+    "eta_prefix": "Estimated time remaining: {time}",
+    "finished_ok": "Installation finished successfully!\nYou can close this window and reboot your new pearintosh, or check the log located on the desktop.",
+    "finished_warnings": "Installation finished with {count} warning(s).\nSome packages failed to install. You can close this window and reboot, or check the logs: /home/liveuser/Desktop/install.log and /tmp/failed_packages.log",
+    "failed": "Installation Failed!\nError: {error}\nPlease check /home/liveuser/Desktop/install.log for details. You may need to restart the installer or check your disk."
+  }
+}
