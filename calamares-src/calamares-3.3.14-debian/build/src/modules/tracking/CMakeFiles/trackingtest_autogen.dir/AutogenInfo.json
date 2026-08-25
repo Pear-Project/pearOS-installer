@@ -1,0 +1,129 @@
+{
+	"BUILD_DIR" : "/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/build/src/modules/tracking/trackingtest_autogen",
+	"CMAKE_BINARY_DIR" : "/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/build",
+	"CMAKE_CURRENT_BINARY_DIR" : "/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/build/src/modules/tracking",
+	"CMAKE_CURRENT_SOURCE_DIR" : "/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/src/modules/tracking",
+	"CMAKE_EXECUTABLE" : "/usr/bin/cmake",
+	"CMAKE_LIST_FILES" : 
+	[
+		"/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/src/modules/tracking/CMakeLists.txt",
+		"/usr/share/cmake-3.30/Modules/GNUInstallDirs.cmake",
+		"/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/src/modules/tracking/page_trackingstep.qrc"
+	],
+	"CMAKE_SOURCE_DIR" : "/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian",
+	"CROSS_CONFIG" : false,
+	"DEP_FILE" : "/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/build/src/modules/tracking/trackingtest_autogen/deps",
+	"DEP_FILE_RULE_NAME" : "trackingtest_autogen/timestamp",
+	"HEADERS" : 
+	[
+		[
+			"/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/src/modules/tracking/Config.h",
+			"Mu",
+			"EWIEGA46WW/moc_Config.cpp",
+			null
+		]
+	],
+	"HEADER_EXTENSIONS" : [ "h", "hh", "h++", "hm", "hpp", "hxx", "in", "txx" ],
+	"INCLUDE_DIR" : "/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/build/src/modules/tracking/trackingtest_autogen/include",
+	"MOC_COMPILATION_FILE" : "/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/build/src/modules/tracking/trackingtest_autogen/mocs_compilation.cpp",
+	"MOC_DEFINITIONS" : 
+	[
+		"BUILD_AS_TEST=\"/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/src/modules/tracking\"",
+		"KCOREADDONS_LIB",
+		"QT_CORE_LIB",
+		"QT_DISABLE_DEPRECATED_BEFORE=0x060400",
+		"QT_FORCE_ASSERTS",
+		"QT_NETWORK_LIB",
+		"QT_NO_DEBUG",
+		"QT_SHARED",
+		"QT_SHAREDPOINTER_TRACK_POINTERS",
+		"QT_STRICT_ITERATORS",
+		"QT_TESTCASE_BUILDDIR=\"/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/build/src/modules/tracking\"",
+		"QT_TESTCASE_SOURCEDIR=\"/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/src/modules/tracking\"",
+		"QT_TESTLIB_LIB"
+	],
+	"MOC_DEPEND_FILTERS" : 
+	[
+		[
+			"Q_PLUGIN_METADATA",
+			"[\n][ \t]*Q_PLUGIN_METADATA[ \t]*\\([^\\)]*FILE[ \t]*\"([^\"]+)\""
+		]
+	],
+	"MOC_INCLUDES" : 
+	[
+		"/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/src/libcalamares",
+		"/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/build/src/libcalamares",
+		"/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/src/libcalamaresui",
+		"/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/src/modules/tracking",
+		"/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/build/src/modules/tracking",
+		"/usr/include/x86_64-linux-gnu/qt6/QtCore",
+		"/usr/include/x86_64-linux-gnu/qt6",
+		"/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++",
+		"/usr/include/x86_64-linux-gnu/qt6/QtNetwork",
+		"/usr/include/KF6/KCoreAddons",
+		"/usr/include/x86_64-linux-gnu/qt6/QtTest",
+		"/usr/include",
+		"/usr/include/c++/13",
+		"/usr/include/x86_64-linux-gnu/c++/13",
+		"/usr/include/c++/13/backward",
+		"/usr/lib/gcc/x86_64-linux-gnu/13/include",
+		"/usr/local/include",
+		"/usr/include/x86_64-linux-gnu"
+	],
+	"MOC_MACRO_NAMES" : 
+	[
+		"Q_OBJECT",
+		"Q_GADGET",
+		"Q_NAMESPACE",
+		"Q_NAMESPACE_EXPORT",
+		"Q_GADGET_EXPORT",
+		"Q_ENUM_NS",
+		"K_PLUGIN_FACTORY_WITH_JSON",
+		"K_EXPORT_PLASMA_DATAENGINE_WITH_JSON",
+		"K_EXPORT_PLASMA_RUNNER",
+		"K_PLUGIN_FACTORY",
+		"K_PLUGIN_CLASS",
+		"K_PLUGIN_CLASS_WITH_JSON"
+	],
+	"MOC_OPTIONS" : [],
+	"MOC_PATH_PREFIX" : false,
+	"MOC_PREDEFS_CMD" : 
+	[
+		"/usr/bin/c++",
+		"-std=gnu++17",
+		"-dM",
+		"-E",
+		"-c",
+		"/usr/share/cmake-3.30/Modules/CMakeCXXCompilerABI.cpp"
+	],
+	"MOC_PREDEFS_FILE" : "/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/build/src/modules/tracking/trackingtest_autogen/moc_predefs.h",
+	"MOC_RELAXED_MODE" : false,
+	"MOC_SKIP" : 
+	[
+		"/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/build/src/modules/tracking/calamares_viewmodule_tracking_autogen/EWIEGA46WW/qrc_page_trackingstep.cpp",
+		"/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/build/src/modules/tracking/calamares_viewmodule_tracking_autogen/mocs_compilation.cpp"
+	],
+	"MULTI_CONFIG" : false,
+	"PARALLEL" : 4,
+	"PARSE_CACHE_FILE" : "/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/build/src/modules/tracking/CMakeFiles/trackingtest_autogen.dir/ParseCache.txt",
+	"QT_MOC_EXECUTABLE" : "/usr/lib/qt6/libexec/moc",
+	"QT_UIC_EXECUTABLE" : "",
+	"QT_VERSION_MAJOR" : 6,
+	"QT_VERSION_MINOR" : 11,
+	"SETTINGS_FILE" : "/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/build/src/modules/tracking/CMakeFiles/trackingtest_autogen.dir/AutogenUsed.txt",
+	"SOURCES" : 
+	[
+		[
+			"/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/src/modules/tracking/Config.cpp",
+			"Mu",
+			null
+		],
+		[
+			"/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/src/modules/tracking/Tests.cpp",
+			"Mu",
+			null
+		]
+	],
+	"USE_BETTER_GRAPH" : true,
+	"VERBOSITY" : 0
+}

@@ -23,8 +23,8 @@
       "desc": "Navighează pentru suport pentru a obține ajutor cu computerul tău"
     },
     "gparted": {
-      "title": "GParted",
-      "desc": "Repară sau șterge un disc folosind GParted"
+      "title": "Disk Utility",
+      "desc": "Repară sau șterge un disc folosind Disk Utility"
     },
     "continue": "Continuă"
   },

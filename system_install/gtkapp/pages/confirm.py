@@ -30,7 +30,7 @@ import gi
 gi.require_version("Gtk", "4.0")
 from gi.repository import Gtk
 
-from .. import disk_backend, installer_backend
+from .. import disk_backend, disk_utility_backend, installer_backend
 from ..widgets import make_card, centered_overlay, make_text_nav_button, load_scaled_picture
 from ..navbar import Navbar
 
@@ -159,9 +159,40 @@ class ConfirmPage:
         self.disk_row.set_halign(Gtk.Align.CENTER)
         self.disk_row.set_margin_top(20)
         box.append(self.disk_row)
+
+        # Shown instead of disk_row when Disk Utility already made the
+        # choice (disk_utility_backend.has_pending_choice()) - nothing left
+        # to pick here, just a confirmation of what was already decided.
+        self.disk_utility_summary_label = Gtk.Label(label="")
+        self.disk_utility_summary_label.add_css_class("setup-text")
+        self.disk_utility_summary_label.set_wrap(True)
+        self.disk_utility_summary_label.set_margin_top(20)
+        self.disk_utility_summary_label.set_visible(False)
+        box.append(self.disk_utility_summary_label)
         return box
 
     def _load_disks(self):
+        # Disk Utility already picked (and validated) a disk + action -
+        # nothing to re-pick here, just show what was decided.
+        if disk_utility_backend.has_pending_choice():
+            choice = disk_utility_backend.get_pending_choice()
+            i18n = self.app.i18n_for(self.app.current_locale)
+            self.disk_row.set_visible(False)
+            self.disk_utility_summary_label.set_visible(True)
+            self.disk_utility_summary_label.set_label(
+                i18n.t(
+                    "confirm.disk.disk_utility_summary",
+                    "Ready to install ({choice}) on {device}",
+                ).format(
+                    choice=choice.get("installChoice", "?"),
+                    device=choice.get("deviceName") or choice.get("device", "?"),
+                )
+            )
+            return
+
+        self.disk_row.set_visible(True)
+        self.disk_utility_summary_label.set_visible(False)
+
         for child in self._disk_buttons:
             self.disk_row.remove(child)
         self._disk_buttons = []
@@ -235,5 +266,42 @@ class ConfirmPage:
             self._tab_index += 1
             self.stack.set_visible_child_name(self._tab_names[self._tab_index])
             self._update_footer()
+        elif disk_utility_backend.has_pending_choice():
+            # Disk Utility already validated a choice on a live, minimized
+            # Calamares - continue driving that same session through to a
+            # real install instead of starting a separate one.
+            self.app.go_to("progress")
+            disk_utility_backend.proceed_with_install(
+                on_progress=self._on_install_progress,
+                on_finished=self._on_install_finished,
+                on_failed=self._on_install_failed,
+                on_stuck=self._on_install_stuck,
+            )
         else:
             installer_backend.launch_install(disk=self._selected_disk)
+
+    def _progress_page(self):
+        return self.app.pages["progress"]
+
+    def _on_install_progress(self, percent, label):
+        self._progress_page().update_progress(percent * 100.0, label or None)
+
+    def _on_install_finished(self):
+        self._progress_page().show_finished()
+
+    def _on_install_failed(self, message, details):
+        self._progress_page().show_failed(message or details or "")
+
+    def _on_install_stuck(self):
+        # Something on a locale/keyboard/summary page needs real
+        # interaction that couldn't happen while Calamares was hidden -
+        # its window has already been restored by disk_utility_backend at
+        # this point, so surface that instead of leaving our own progress
+        # page looking stalled with no explanation.
+        i18n = self.app.i18n_for(self.app.current_locale)
+        self._progress_page().show_failed(
+            i18n.t(
+                "progress.stuck",
+                "Calamares needs your attention - its window has been restored, please continue there.",
+            )
+        )

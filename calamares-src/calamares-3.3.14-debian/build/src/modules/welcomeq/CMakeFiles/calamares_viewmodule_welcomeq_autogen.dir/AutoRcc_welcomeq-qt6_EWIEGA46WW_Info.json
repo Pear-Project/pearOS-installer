@@ -1,0 +1,31 @@
+{
+	"BUILD_DIR" : "/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/build/src/modules/welcomeq/calamares_viewmodule_welcomeq_autogen",
+	"CMAKE_BINARY_DIR" : "/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/build",
+	"CMAKE_CURRENT_BINARY_DIR" : "/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/build/src/modules/welcomeq",
+	"CMAKE_CURRENT_SOURCE_DIR" : "/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/src/modules/welcomeq",
+	"CMAKE_SOURCE_DIR" : "/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian",
+	"CROSS_CONFIG" : false,
+	"GENERATOR" : "Ninja",
+	"INCLUDE_DIR" : "/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/build/src/modules/welcomeq/calamares_viewmodule_welcomeq_autogen/include",
+	"INPUTS" : 
+	[
+		"/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/src/modules/welcomeq/Requirements.qml",
+		"/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/src/modules/welcomeq/release_notes.qml",
+		"/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/src/modules/welcomeq/Recommended.qml",
+		"/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/src/modules/welcomeq/welcomeq-qt6.qml",
+		"/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/src/modules/welcomeq/img/chevron-left-solid.svg",
+		"/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/src/modules/welcomeq/img/squid.png",
+		"/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/src/modules/welcomeq/img/language-icon-48px.png"
+	],
+	"LOCK_FILE" : "/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/build/src/modules/welcomeq/CMakeFiles/calamares_viewmodule_welcomeq_autogen.dir/AutoRcc_welcomeq-qt6_EWIEGA46WW_Lock.lock",
+	"MULTI_CONFIG" : false,
+	"OPTIONS" : [ "-name", "welcomeq_qt6" ],
+	"OUTPUT_CHECKSUM" : "EWIEGA46WW",
+	"OUTPUT_NAME" : "qrc_welcomeq-qt6.cpp",
+	"RCC_EXECUTABLE" : "/usr/lib/qt6/libexec/rcc",
+	"RCC_LIST_OPTIONS" : [ "--list" ],
+	"SETTINGS_FILE" : "/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/build/src/modules/welcomeq/CMakeFiles/calamares_viewmodule_welcomeq_autogen.dir/AutoRcc_welcomeq-qt6_EWIEGA46WW_Used.txt",
+	"SOURCE" : "/home/alxb421/Desktop/pearOS-installer/calamares-src/calamares-3.3.14-debian/src/modules/welcomeq/welcomeq-qt6.qrc",
+	"USE_BETTER_GRAPH" : true,
+	"VERBOSITY" : 0
+}

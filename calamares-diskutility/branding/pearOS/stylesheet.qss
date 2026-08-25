@@ -1,0 +1,481 @@
+/*
+ * SPDX-FileCopyrightText: no
+ * SPDX-License-Identifier: CC0-1.0
+ */
+
+/*
+A branding component can ship a stylesheet (like this one)
+which is applied to parts of the Calamares user-interface.
+In principle, all parts can be styled through CSS.
+Missing parts should be filed as issues.
+
+The IDs are based on the object names in the C++ code.
+You can use the Debug Dialog to find out object names:
+  - Open the debug dialog
+  - Choose tab *Tools*
+  - Click *Widget Tree* button
+The list of object names is printed in the log.
+
+Documentation for styling Qt Widgets through a stylesheet
+can be found at
+    https://doc.qt.io/qt-5/stylesheet-examples.html
+    https://doc.qt.io/qt-5/stylesheet-reference.html
+In Calamares, styling widget classes is supported (e.g.
+using `QComboBox` as a selector).
+
+This example stylesheet has all the actual styling commented out.
+The examples are not exhaustive.
+
+*/
+
+/*** Generic Widgets.
+ *
+ * You can style **all** widgets of a given class by selecting
+ * the class name. Some widgets have specialized sub-selectors.
+ */
+
+/*
+QPushButton { background-color: green; }
+*/
+
+/*** Main application window.
+ *
+ * The main application window has the sidebar, which in turn
+ * contains a logo and a list of items -- note that the list
+ * can **not** be styled, since it has its own custom C++
+ * delegate code.
+ */
+
+/*
+#mainApp { }
+#sidebarApp { }
+#logoApp { }
+*/
+
+QWidget {
+    font: 13px;
+    background-color: #1f1f1f;   /* gri închis, stil dark macOS */
+    color: #e0e0e0;              /* gri deschis pentru text */
+}
+
+QDialogButtonBox {
+    dialogbuttonbox-buttons-have-icons: 0;
+}
+
+#debugButton {
+    background-color: none;
+    font: bold 8px;
+    color: #e0e0e0;
+    height: 32px;
+    padding: 0px;
+    border: none;
+}
+
+/* Texte generale */
+QLabel, QGroupBox, QCheckBox, QRadioButton, QMenu, QMenuBar, QStatusBar {
+    color: #e0e0e0;
+    background-color: transparent;
+}
+
+/* Zone de conținut / panouri */
+QFrame, QStackedWidget {
+    background-color: #242424;
+    border: 1px solid #333333;
+    border-radius: 6px;
+}
+
+/* QLabel is a QFrame subclass in Qt, so without this reset every label
+   (info-grid values, header subtitle, etc.) inherits the boxed panel
+   styling above and renders as its own little card - Disk Utility's
+   plain text labels never look like that. Specific QLabel#id rules
+   further down (badges that DO want a box) still win over this since
+   an ID selector is more specific than the bare-type selector here. */
+QLabel {
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
+}
+
+/* Câmpuri de text */
+QLineEdit, QPlainTextEdit, QTextEdit, QSpinBox, QDoubleSpinBox, QComboBox {
+    background-color: #262626;
+    color: #e0e0e0;
+    border: 1px solid #3a3a3a;
+    border-radius: 6px;
+    padding: 4px 6px;
+}
+
+QLineEdit:focus, QPlainTextEdit:focus, QTextEdit:focus,
+QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus {
+    border: 1px solid #0a84ff;   /* accent albastru tip macOS */
+    background-color: #2b2b2b;
+}
+
+/* Dropdown (lista interioară a QComboBox) cu accent albastru simplu */
+QComboBox QAbstractItemView {
+    background-color: #202020;
+    color: #e0e0e0;
+    selection-background-color: #0a84ff;
+    selection-color: #f5f5f5;
+    border: 1px solid #3a3a3a;
+}
+
+QComboBox::drop-down {
+    border: none;
+    background-color: transparent;
+}
+
+QComboBox::down-arrow {
+    image: none; /* lăsăm icon-ul implicit, dar pe fundal întunecat */
+}
+
+/* Liste și tabele */
+QListView, QTreeView, QTableView {
+    background-color: #202020;
+    color: #e0e0e0;
+    border: 1px solid #333333;
+    alternate-background-color: #262626;
+}
+
+QHeaderView::section {
+    background-color: #252525;
+    color: #e0e0e0;
+    padding: 4px 6px;
+    border: 1px solid #333333;
+}
+
+/* Butoane tipice, stil plat, rotunjit, macOS-like */
+QPushButton {
+    background-color: #2a2a2a;
+    color: #e0e0e0;
+    border-radius: 8px;
+    border: 1px solid #3a3a3a;
+    padding: 6px 14px;
+}
+
+QPushButton:hover {
+    background-color: #343434;
+}
+
+QPushButton:pressed {
+    background-color: #3c3c3c;
+}
+
+QPushButton:disabled {
+    background-color: #1e1e1e;
+    color: #6a6a6a;
+    border-color: #2a2a2a;
+}
+
+/* Butoane de acțiune principală (Next, Install) – accent albastru */
+QPushButton#nextButton, QPushButton#installButton, QPushButton#doneButton {
+    background-color: #0a84ff;
+    border-color: #0a84ff;
+    color: #f5f5f5;
+}
+
+QPushButton#nextButton:hover, QPushButton#installButton:hover, QPushButton#doneButton:hover {
+    background-color: #1b8dff;
+}
+
+QPushButton#nextButton:pressed, QPushButton#installButton:pressed, QPushButton#doneButton:pressed {
+    background-color: #0060df;
+}
+
+/* Scrollbar-uri înguste, închise la culoare */
+QScrollBar:vertical {
+    background: #1f1f1f;
+    width: 10px;
+    margin: 4px 0 4px 0;
+}
+
+QScrollBar::handle:vertical {
+    background: #3a3a3a;
+    min-height: 24px;
+    border-radius: 4px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #4a4a4a;
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    background: none;
+    border: none;
+}
+
+QScrollBar:horizontal {
+    background: #1f1f1f;
+    height: 10px;
+    margin: 0 4px 0 4px;
+}
+
+QScrollBar::handle:horizontal {
+    background: #3a3a3a;
+    min-width: 24px;
+    border-radius: 4px;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background: #4a4a4a;
+}
+
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+    background: none;
+    border: none;
+}
+
+/*** Welcome module.
+ *
+ * There are plenty of parts, but the buttons are the most interesting
+ * ones (donate, release notes, ...). The little icon image can be
+ * styled through *qproperty-icon*, which is a little obscure.
+ * URLs can reference the QRC paths of the Calamares application
+ * or loaded via plugins or within the filesystem. There is no
+ * comprehensive list of available icons, though.
+ */
+
+#aboutButton {
+    background-color: none;
+    font: 14px;
+    border: none;
+}
+
+/*
+QPushButton#aboutButton { qproperty-icon: url(:/data/images/release.svg); }
+#donateButton,
+#supportButton,
+#releaseNotesButton,
+#knownIssuesButton { qproperty-icon: url(:/data/images/help.svg); }
+*/
+
+/*** Partitioning module.
+ *
+ * Object names confirmed against the actual compiled
+ * PartitionPage.ui (calamares 3.3.14-1, same source used to build
+ * this branding against) - not guessed.
+ */
+
+/* The segmented usage bar (PartitionBarsView) and its legend
+   (PartitionLabelsView) - macOS Disk Utility-style rounded pill bar
+   instead of Calamares' default flat rectangle. */
+PartitionBarsView {
+    background-color: #242424;
+    border: 1px solid #333333;
+    border-radius: 6px;
+}
+
+PartitionLabelsView {
+    background-color: transparent;
+    border: none;
+}
+
+/* Partition list - already covered by the generic QTreeView rule
+   above, but pinned here explicitly since this is the one directly
+   visible in the reference screenshot's volume list. */
+QTreeView#partitionTreeView {
+    background-color: #202020;
+    border: 1px solid #333333;
+    border-radius: 6px;
+}
+
+/* Disk Utility-style left sidebar (disk -> partitions tree) - flush dark
+   panel, no frame, matching the reference screenshot's sidebar. Rows sized
+   down from the first pass (12,8/6,8 padding read as oversized against the
+   real Disk Utility reference - this is deliberately tighter, closer to
+   its actual ~22px row height). */
+QWidget#sidebarPanel {
+    background-color: #1a1a1a;
+    border-right: 1px solid #333333;
+}
+
+QTreeView#deviceSidebarView {
+    background-color: transparent;
+    border: none;
+    padding: 4px 2px;
+    font-size: 12px;
+}
+
+QTreeView#deviceSidebarView::item {
+    padding: 3px 4px;
+    border-radius: 4px;
+    color: #e0e0e0;
+    height: 20px;
+}
+
+QTreeView#deviceSidebarView::item:selected {
+    background-color: #0a84ff;
+    color: #ffffff;
+}
+
+QTreeView#deviceSidebarView::branch {
+    background-color: transparent;
+}
+
+/* The "View" toolbar button above the sidebar tree - flat, text-only,
+   matching Disk Utility's own top-left "View" control. */
+QToolButton#viewMenuButton {
+    background-color: transparent;
+    border: none;
+    border-radius: 4px;
+    padding: 3px 8px;
+    margin: 4px;
+    color: #e0e0e0;
+    font-size: 12px;
+}
+
+QToolButton#viewMenuButton:hover {
+    background-color: #ffffff14;
+}
+
+QToolButton#viewMenuButton::menu-indicator {
+    width: 8px;
+}
+
+/* Disk Utility-style disk icon/title/capacity header (ChoicePage) -
+   matches the reference screenshot's "Container disk4 / APFS Container /
+   245.11 GB" header above the usage bar. */
+QLabel#diskHeaderTitle {
+    color: #f5f5f5;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+QLabel#diskHeaderSubtitle {
+    color: #9a9a9a;
+    font-size: 12px;
+}
+
+QLabel#diskHeaderCapacityBadge {
+    background-color: #2c2c2c;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    padding: 8px 16px;
+    color: #f5f5f5;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* Thin separator between the disk name/capacity header and the usage bar. */
+QFrame#diskHeaderSeparator {
+    background-color: #333333;
+    max-height: 1px;
+    min-height: 1px;
+    border: none;
+}
+
+/* Disk Utility-style info grid under the usage bar - the whole thing
+   framed in a single rounded outline, per-field separators inset from
+   that outline rather than touching it. */
+QWidget#diskInfoPanel {
+    background-color: #202020;
+    border: 1px solid #333333;
+    border-radius: 8px;
+}
+
+QWidget#diskInfoPanel QLabel {
+    padding: 2px 4px;
+}
+
+/* Column separator, inset top/bottom so it doesn't touch the outline. */
+QFrame#diskInfoVSeparator {
+    background-color: #333333;
+    min-width: 1px;
+    max-width: 1px;
+    border: none;
+    margin: 10px 0px;
+}
+
+/* Row separators - one per column per row gap (6 total: 3 rows x 2
+   columns), each confined to its own column pair so it doesn't cross
+   the vertical separator, inset left/right so it doesn't touch the
+   outline either. */
+QFrame#diskInfoHSeparator1Left, QFrame#diskInfoHSeparator1Right,
+QFrame#diskInfoHSeparator2Left, QFrame#diskInfoHSeparator2Right,
+QFrame#diskInfoHSeparator3Left, QFrame#diskInfoHSeparator3Right {
+    background-color: #333333;
+    min-height: 1px;
+    max-height: 1px;
+    border: none;
+    margin: 0px 10px;
+}
+
+/* Qt Style Sheets don't support ^=/$= substring attribute selectors
+   (only exact-match on real Q_PROPERTY values) - object names listed
+   explicitly instead, matching PartitionPage.ui. */
+QLabel#label_location, QLabel#label_capacity, QLabel#label_connection,
+QLabel#label_child_count, QLabel#label_partition_map, QLabel#label_type,
+QLabel#label_smart, QLabel#label_device {
+    color: #9a9a9a;
+}
+
+QLabel#locationValueLabel, QLabel#capacityValueLabel, QLabel#connectionValueLabel,
+QLabel#childCountValueLabel, QLabel#partitionMapValueLabel, QLabel#typeValueLabel,
+QLabel#smartValueLabel, QLabel#deviceValueLabel {
+    color: #f0f0f0;
+    font-weight: 600;
+}
+
+/* ChoicePage (Erase disk / Manual partitioning / Replace / Alongside) -
+   object names confirmed against ChoicePage.ui (m_drivesLabel,
+   m_messageLabel, m_itemsScrollArea, scrollAreaWidgetContents, hLine).
+   The individual choice rows (PrettyRadioButton) don't get per-instance
+   object names in ChoicePage.cpp, so they're styled by class name
+   instead - QSS supports that the same way QPushButton is styled above. */
+QScrollArea#m_itemsScrollArea, QWidget#scrollAreaWidgetContents {
+    background-color: transparent;
+    border: none;
+}
+
+PrettyRadioButton {
+    background-color: #242424;
+    border: 1px solid #333333;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 4px 0px;
+}
+
+PrettyRadioButton:hover {
+    border-color: #0a84ff88;
+}
+
+QLabel#m_drivesLabel, QLabel#m_messageLabel {
+    color: #f0f0f0;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+QFrame#hLine {
+    background-color: #333333;
+    max-height: 1px;
+    border: none;
+}
+
+/* Toolbar-style action buttons (icons added in PartitionPage.cpp). */
+QPushButton#newPartitionTableButton,
+QPushButton#createButton,
+QPushButton#editButton,
+QPushButton#deleteButton,
+QPushButton#revertButton {
+    padding: 8px 16px;
+    border-radius: 8px;
+}
+
+/*
+#bootInfoIcon { }
+#bootInfoLable { }
+#deviceInfoIcon { }
+#defineInfoLabel { }
+#scrollAreaWidgetContents { }
+*/
+
+/*** Licensing module.
+ *
+ * The licensing module paints individual widgets for each of
+ * the licenses. The item can be collapsed or expanded.
+ */
+
+/*
+#licenseItem {  }
+#licenseItemFullText {  }
+*/

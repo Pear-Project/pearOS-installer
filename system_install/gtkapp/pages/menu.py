@@ -1,10 +1,13 @@
 """Port of page_menu.html: the "Recovery" menu - 4 single-select rows
-(packup-restore stub / installer / browser / gparted). Double-click an item
-= immediate action (handleMenuAction); Continue = act on whichever is
+(packup-restore stub / installer / browser / disk utility). Double-click an
+item = immediate action (handleMenuAction); Continue = act on whichever is
 selected (handleMenuContinue). The installer path now routes through the
 confirm page's welcome/EULA/disk-select flow instead of launching Calamares
 directly - Calamares itself is launched from the disk-select tab's own
-Continue button (see confirm.py)."""
+Continue button (see confirm.py). The "disk utility" row used to launch the
+real GParted; it now launches our own Calamares-based Disk Utility clone
+instead (see disk_utility_backend.py) - same "gparted" internal key/icon,
+only the label and the launched program changed."""
 import subprocess
 
 import gi
@@ -14,6 +17,7 @@ from gi.repository import Gtk
 
 from ..widgets import make_card, centered_overlay, load_scaled_picture
 from ..navbar import Navbar
+from .. import disk_utility_backend
 
 _ITEMS = [
     ("packup", "packup-logo.png", "menu.packup"),
@@ -23,11 +27,14 @@ _ITEMS = [
 ]
 
 
-def _open_gparted():
-    try:
-        subprocess.Popen(["gparted"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    except OSError:
-        pass
+def _open_gparted(app):
+    def _on_choice_ready(choice):
+        # Disk Utility just minimized itself after a valid choice - show
+        # the confirmation screen (confirm.py's disk tab reads the same
+        # pending choice via disk_utility_backend.has_pending_choice()).
+        app.go_to("confirm")
+
+    disk_utility_backend.launch_disk_utility(on_ready=_on_choice_ready)
 
 
 def _open_browser():
@@ -147,7 +154,7 @@ class MenuPage:
         elif key == "browser":
             _open_browser()
         elif key == "gparted":
-            _open_gparted()
+            _open_gparted(self.app)
 
     def _on_continue(self):
         key = self._selected
@@ -158,4 +165,4 @@ class MenuPage:
         elif key == "browser":
             _open_browser()
         elif key == "gparted":
-            _open_gparted()
+            _open_gparted(self.app)

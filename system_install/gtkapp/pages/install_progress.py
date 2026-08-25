@@ -119,8 +119,10 @@ class InstallProgressPage:
         self.disk_box.set_visible(False)
         self.progress_bar.set_fraction(0.0)
         self.progress_bar.set_visible(True)
-        self.eta_label.set_label(self._t("progress.eta_calculating", "Estimated time remaining: Calculating..."))
-        self.eta_label.set_visible(True)
+        # No real ETA data source (Calamares' own progress signal is just
+        # percent + a current-job description, no time estimate) - status
+        # text below now shows that job description instead.
+        self.eta_label.set_visible(False)
         self.status_label.remove_css_class("progress-status-success")
         self.status_label.remove_css_class("progress-status-warning")
         self.status_label.remove_css_class("progress-status-error")
@@ -150,14 +152,13 @@ class InstallProgressPage:
             self.disk_name_label.set_label(f"{disk['model']}\n{disk['size']}")
         self.disk_box.set_visible(bool(disk))
 
-    def update_progress(self, percent, eta_text=None):
-        """percent: 0-100. eta_text: pre-formatted remaining-time string,
-        or None while there isn't enough data yet to estimate one."""
+    def update_progress(self, percent, job_label=None):
+        """percent: 0-100. job_label: Calamares' own current-job
+        description (e.g. "Formatting partition..."), or None to leave the
+        status text as-is."""
         self.progress_bar.set_fraction(max(0.0, min(100.0, percent)) / 100.0)
-        if eta_text:
-            self.eta_label.set_label(self._t("progress.eta_prefix", "Estimated time remaining: {time}").format(time=eta_text))
-        else:
-            self.eta_label.set_label(self._t("progress.eta_calculating", "Estimated time remaining: Calculating..."))
+        if job_label:
+            self.status_label.set_label(job_label)
 
     def show_finished(self, warnings=0):
         self.progress_bar.set_visible(False)
