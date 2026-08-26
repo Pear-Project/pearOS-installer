@@ -98,6 +98,13 @@ class SelectList:
             label.set_margin_bottom(3)
             row.set_child(label)
             self.listbox.append(row)
+        # Rebuilding the row set (country.py's IP-suggestion reorder is the
+        # only caller) can leave stale paint behind under VirtualBox's
+        # software renderer, which doesn't always repaint the old rows'
+        # damage region correctly when they're removed mid-session - force
+        # a full re-layout/repaint instead of trusting incremental damage.
+        self.listbox.queue_resize()
+        self.listbox.queue_draw()
 
     def selected_value(self):
         row = self.listbox.get_selected_row()

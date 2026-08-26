@@ -22,7 +22,7 @@ class PearIDPage:
         self.title = make_title("Sign In with PearID")
         content.append(self.title)
         self.description = make_description(
-            "Sign in with your PearID to access iCloud-style sync, the App "
+            "Sign in with your PearID to sync your data, access the App "
             "Store, and more across your pearOS devices."
         )
         content.append(self.description)

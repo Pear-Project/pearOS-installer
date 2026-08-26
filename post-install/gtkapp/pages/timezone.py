@@ -6,7 +6,8 @@ from gi.repository import Gtk
 
 from .. import state as state_mod
 from ..widgets import page_root, make_title
-from .common import SelectList, make_worldmap
+from .common import SelectList
+from .worldmap import WorldMapWidget
 
 
 class TimezonePage:
@@ -15,12 +16,15 @@ class TimezonePage:
 
         content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         content.set_hexpand(True)
-        content.append(make_worldmap())
         self.title = make_title("Select Your Time Zone")
         content.append(self.title)
 
+        self.map = WorldMapWidget(on_pick=self._on_map_pick)
+        content.append(self.map)
+
         items = [(tz, tz) for tz in state_mod.COMMON_TIMEZONES]
         self.select_list = SelectList(items)
+        self.select_list.listbox.connect("row-selected", self._on_list_row_selected)
         content.append(self.select_list.widget)
 
         utc_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
@@ -41,7 +45,15 @@ class TimezonePage:
             content, on_back=self._on_back, on_forward=self._on_continue, forward_label="Continue"
         )
 
+    def _on_map_pick(self, tz):
+        self.select_list.select_value(tz)
+
+    def _on_list_row_selected(self, _listbox, _row):
+        self.map.set_selected(self.select_list.selected_value())
+
     def on_show(self):
+        if self.app.state.timezone:
+            self.select_list.select_value(self.app.state.timezone)
         self.title.set_label(self.app.t("timezone.title", "Select Your Time Zone"))
         self.card.forward_button.set_label(self.app.t("timezone.continue", "Continue"))
         self.utc_label.set_label(
