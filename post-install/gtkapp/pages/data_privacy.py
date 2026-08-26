@@ -57,7 +57,7 @@ class DataPrivacyPage:
         pass
 
     def _on_back(self):
-        self.app.go_to("wifi")
+        self.app.go_to("accessibility")
 
     def _on_continue(self):
-        self.app.go_to("migration_assistant")
+        self.app.go_to("pearid")

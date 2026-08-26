@@ -66,7 +66,7 @@ class WrittenSpokenPage:
         self.customize_btn.set_valign(Gtk.Align.END)
         self.customize_btn.set_margin_start(20)
         self.customize_btn.set_margin_bottom(20)
-        self.customize_btn.connect("clicked", lambda b: self.app.go_to("keymap"))
+        self.customize_btn.connect("clicked", lambda b: self.app.go_to("language"))
         self.card.overlay.add_overlay(self.customize_btn)
 
     def on_show(self):
@@ -80,7 +80,7 @@ class WrittenSpokenPage:
         self.dictation_label.set_label("Dictation: " + display_lang)
 
     def _on_back(self):
-        self.app.go_to("country")
+        self.app.go_to("migration_assistant")
 
     def _on_continue(self):
-        self.app.go_to("timezone")
+        self.app.go_to("accessibility")

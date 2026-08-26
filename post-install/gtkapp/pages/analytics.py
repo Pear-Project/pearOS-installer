@@ -64,7 +64,7 @@ class AnalyticsPage:
         pass
 
     def _on_back(self):
-        self.app.go_to("location_services")
+        self.app.go_to("timezone")
 
     def _on_continue(self):
         self.app.state.save_analytics(

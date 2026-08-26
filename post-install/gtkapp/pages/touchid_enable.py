@@ -51,18 +51,18 @@ class TouchIDEnablePage:
             return
         if not backend.has_device():
             self.app.state.save_touchid(False)
-            self.app.go_to("finish")
+            self.app.go_to("agreement")
             return
         if backend.list_fingerprints():
             self.app.state.save_touchid(True)
-            self.app.go_to("finish")
+            self.app.go_to("agreement")
 
     def _on_back(self):
-        self.app.go_to("piri")
+        self.app.go_to("user")
 
     def _on_later_clicked(self, _btn):
         self.app.state.save_touchid(False)
-        self.app.go_to("finish")
+        self.app.go_to("agreement")
 
     def _on_continue(self):
         self.app.go_to("touchid_setup")

@@ -216,7 +216,7 @@ class AgreementPage:
         self.card.forward_button.set_label(self.app.t("agreement.continue", "Continue"))
 
     def _on_back(self):
-        self.app.go_to("pearid")
+        self.app.go_to("touchid_setup")
 
     def _on_continue(self):
-        self.app.go_to("user")
+        self.app.go_to("location_services")

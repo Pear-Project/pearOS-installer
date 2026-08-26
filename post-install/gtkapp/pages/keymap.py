@@ -36,7 +36,7 @@ class KeymapPage:
         self.card.forward_button.set_label(self.app.t("keymap.continue", "Continue"))
 
     def _on_back(self):
-        self.app.go_to("written_spoken")
+        self.app.go_to("language")
 
     def _on_continue(self):
         layout = self.select_list.selected_value()

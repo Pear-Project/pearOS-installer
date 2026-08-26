@@ -24,11 +24,14 @@ class LanguagePage:
         content.append(self.select_list.widget)
 
         self.widget, self.card = page_root(
-            content, on_back=None, on_forward=self._on_continue, forward_label="Continue"
+            content, on_back=self._on_back, on_forward=self._on_continue, forward_label="Continue"
         )
 
     def on_show(self):
         pass
+
+    def _on_back(self):
+        self.app.go_to("written_spoken")
 
     def _on_continue(self):
         locale = self.select_list.selected_value()
@@ -37,4 +40,4 @@ class LanguagePage:
             return
         self.app.state.select_language(locale)
         self.app.set_locale(self.app.state.lng)
-        self.app.go_to("country")
+        self.app.go_to("keymap")

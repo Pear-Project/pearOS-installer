@@ -53,4 +53,4 @@ class PiriPage:
 
     def _on_continue(self):
         backend.set_enabled(self.toggle.get_active())
-        self.app.go_to("touchid_enable")
+        self.app.go_to("look")

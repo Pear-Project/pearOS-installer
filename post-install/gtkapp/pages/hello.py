@@ -153,4 +153,4 @@ class HelloPage:
         self.canvas = fallback
 
     def _on_continue(self, _btn):
-        self.bg.transition_to_blurred(0.8, on_complete=lambda: self.app.go_to("language"))
+        self.bg.transition_to_blurred(0.8, on_complete=lambda: self.app.go_to("country"))

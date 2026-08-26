@@ -54,7 +54,7 @@ class TimezonePage:
         self.utc_check.set_active(not windows_detected)
 
     def _on_back(self):
-        self.app.go_to("written_spoken")
+        self.app.go_to("location_services")
 
     def _on_continue(self):
         tz = self.select_list.selected_value()
@@ -62,4 +62,4 @@ class TimezonePage:
         if err:
             self.app.show_alert(err)
             return
-        self.app.go_to("accessibility")
+        self.app.go_to("analytics")

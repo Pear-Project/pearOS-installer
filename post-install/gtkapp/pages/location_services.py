@@ -60,8 +60,8 @@ class LocationServicesPage:
         pass
 
     def _on_back(self):
-        self.app.go_to("look")
+        self.app.go_to("agreement")
 
     def _on_continue(self):
         _set_geoclue_enabled(self.toggle.get_active())
-        self.app.go_to("analytics")
+        self.app.go_to("timezone")

@@ -1,13 +1,31 @@
-"""'Select Your Country or Region' - inserted after Language, before Written
-and Spoken Languages, matching the real macOS Setup Assistant flow this
-wizard's design is modeled on."""
+"""'Select Your Country or Region' - now the second real page (right after
+the hello animation), matching the real macOS Setup Assistant flow this
+wizard's design is modeled on. If online, the two most likely countries
+(IP geolocation, then the installed locale's own region as a second
+guess) are floated to the top of the list and the first is preselected -
+purely a convenience reorder, every other country is still right there
+below, unchanged and just as selectable."""
+import threading
+
 import gi
 
 gi.require_version("Gtk", "4.0")
-from gi.repository import Gtk
+from gi.repository import Gtk, GLib
 
+from .. import network_backend as netbackend
 from ..widgets import page_root, make_title
 from .common import SelectList, make_worldmap
+
+# Only needs entries for the locales this app actually ships translations
+# for (see i18n's I18N_DIR) - a country.py-spelling lookup for the second,
+# locale-based guess, not a general-purpose region-code table.
+_LOCALE_REGION_TO_COUNTRY = {
+    "US": "United States", "GB": "United Kingdom", "CA": "Canada",
+    "AU": "Australia", "FR": "France", "PT": "Portugal", "HU": "Hungary",
+    "MX": "Mexico", "RU": "Russia", "JP": "Japan", "RO": "Romania",
+    "SE": "Sweden", "IT": "Italy", "DE": "Germany", "ES": "Spain",
+    "BR": "Brazil", "CZ": "Czech Republic", "CN": "China",
+}
 
 COUNTRIES = [
     "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Argentina",
@@ -50,6 +68,7 @@ COUNTRIES = [
 class CountryPage:
     def __init__(self, app):
         self.app = app
+        self._suggestions_applied = False
 
         content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         content.set_hexpand(True)
@@ -68,9 +87,37 @@ class CountryPage:
     def on_show(self):
         if self.app.state.country:
             self.select_list.select_value(self.app.state.country)
+            return
+        if self._suggestions_applied:
+            return
+        self._suggestions_applied = True
+        if not netbackend.has_internet():
+            return
+        threading.Thread(target=self._geolocate, daemon=True).start()
+
+    def _geolocate(self):
+        guess = netbackend.geolocate_country()
+        GLib.idle_add(self._apply_suggestions, guess)
+
+    def _locale_guess(self):
+        lng = getattr(self.app.state, "lng", None) or ""
+        region = lng.split("_")[-1].split(".")[0].upper() if "_" in lng else None
+        return _LOCALE_REGION_TO_COUNTRY.get(region)
+
+    def _apply_suggestions(self, ip_guess):
+        top = []
+        for candidate in (ip_guess, self._locale_guess()):
+            if candidate in COUNTRIES and candidate not in top:
+                top.append(candidate)
+        if not top:
+            return False
+        rest = [c for c in COUNTRIES if c not in top]
+        self.select_list.set_items([(c, c) for c in top + rest])
+        self.select_list.select_value(top[0])
+        return False
 
     def _on_back(self):
-        self.app.go_to("language")
+        self.app.go_to("hello")
 
     def _on_continue(self):
         country = self.select_list.selected_value()
@@ -78,4 +125,5 @@ class CountryPage:
             self.app.show_alert("You must select one country or region from the list")
             return
         self.app.state.select_country(country)
-        self.app.go_to("written_spoken")
+        self.app.state.wifi_entry_forward = True
+        self.app.go_to("wifi")

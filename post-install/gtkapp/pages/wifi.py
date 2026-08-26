@@ -1,6 +1,14 @@
-"""Wi-Fi: only shown when there's no internet yet (matches post_setup's own
-has_internet() check) - real scan/connect via nmcli (network_backend.py),
-not a mockup list."""
+"""Wi-Fi: only shown when there's no internet yet AND a Wi-Fi device is
+actually present (matches post_setup's own has_internet() check) - real
+scan/connect via nmcli (network_backend.py), not a mockup list.
+
+Sits between country (forward) and migration_assistant (back) in the page
+order; either neighbor may skip straight past this page in either
+direction if the skip conditions are met, so on_show() needs to know
+which direction it was entered from to know which neighbor to bounce
+onward to - app.state.wifi_entry_forward is set by whichever page is
+about to navigate here, True for "entered via country's Continue" /
+False for "entered via migration_assistant's Back"."""
 import gi
 
 gi.require_version("Gtk", "4.0")
@@ -65,8 +73,9 @@ class WifiPage:
         if self._skip_next_show:
             self._skip_next_show = False
             return
-        if netbackend.has_internet():
-            self.app.go_to("data_privacy")
+        forward = getattr(self.app.state, "wifi_entry_forward", True)
+        if netbackend.has_internet() or not netbackend.has_wifi_device():
+            self.app.go_to("migration_assistant" if forward else "country")
             return
         self._refresh()
 
@@ -143,13 +152,13 @@ class WifiPage:
         if ok:
             self.status.set_label("Connected.")
             self._skip_next_show = True
-            self.app.go_to("data_privacy")
+            self.app.go_to("migration_assistant")
         else:
             self.status.set_label("Could not connect: " + (error or "unknown error"))
         return False
 
     def _on_back(self):
-        self.app.go_to("accessibility")
+        self.app.go_to("country")
 
     def _on_continue(self):
-        self.app.go_to("data_privacy")
+        self.app.go_to("migration_assistant")

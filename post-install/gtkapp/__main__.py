@@ -28,10 +28,10 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 _STYLE_CSS = os.path.join(_HERE, "style.css")
 
 PAGE_ORDER = [
-    "hello", "language", "country", "written_spoken", "keymap", "timezone",
-    "accessibility", "wifi", "data_privacy", "migration_assistant", "pearid",
-    "agreement", "user", "look", "location_services", "analytics",
-    "screen_time", "piri", "touchid_enable", "touchid_setup", "finish",
+    "hello", "country", "wifi", "migration_assistant", "written_spoken",
+    "language", "keymap", "accessibility", "data_privacy", "pearid", "user",
+    "touchid_enable", "touchid_setup", "agreement", "location_services",
+    "timezone", "analytics", "screen_time", "piri", "look", "finish",
 ]
 
 

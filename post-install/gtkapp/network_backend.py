@@ -1,6 +1,9 @@
 """Real Wi-Fi scanning/connection via nmcli (NetworkManager's CLI) - same
 connectivity check style as post_setup's has_internet()."""
+import json
 import subprocess
+import urllib.error
+import urllib.request
 
 
 def _run(argv, timeout=15):
@@ -59,6 +62,27 @@ def scan_networks(rescan=True):
             best[ssid] = entry
 
     return sorted(best.values(), key=lambda e: (-e["active"], -e["signal"]))
+
+
+def geolocate_country():
+    """Best-effort IP-based country guess for country.py's "most likely"
+    suggestions - returns the country name (matching country.py's own
+    COUNTRIES list spelling) or None if the lookup fails for any reason
+    (offline, API down, rate-limited, name doesn't match our list, ...).
+    Blocking (network I/O) - callers run this off the GTK main thread.
+
+    ip-api.com's free tier is plain HTTP (no HTTPS, no key) and permits
+    unlimited non-commercial use, which is why it's used here (a one-off
+    lookup per OOBE run isn't the kind of case that needs an API key)."""
+    try:
+        with urllib.request.urlopen("http://ip-api.com/json/?fields=status,country", timeout=4) as resp:
+            data = json.load(resp)
+    except (urllib.error.URLError, TimeoutError, ValueError, OSError):
+        return None
+    if data.get("status") != "success":
+        return None
+    country = data.get("country")
+    return country if isinstance(country, str) and country else None
 
 
 def connect(ssid, password=None):

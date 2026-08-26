@@ -59,7 +59,7 @@ class PearIDPage:
         self.later_btn.set_valign(Gtk.Align.END)
         self.later_btn.set_margin_start(20)
         self.later_btn.set_margin_bottom(20)
-        self.later_btn.connect("clicked", lambda b: self.app.go_to("agreement"))
+        self.later_btn.connect("clicked", lambda b: self.app.go_to("user"))
         self.card.overlay.add_overlay(self.later_btn)
 
     def on_show(self):
@@ -116,7 +116,7 @@ class PearIDPage:
         return False
 
     def _on_back(self):
-        self.app.go_to("migration_assistant")
+        self.app.go_to("data_privacy")
 
     def _on_continue(self):
-        self.app.go_to("agreement")
+        self.app.go_to("user")

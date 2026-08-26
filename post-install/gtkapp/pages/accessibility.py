@@ -116,7 +116,7 @@ class AccessibilityPage:
         self.title.set_label(self.app.t("accessibility.title", "Accessibility"))
 
     def _on_back(self):
-        self.app.go_to("timezone")
+        self.app.go_to("written_spoken")
 
     def _on_continue(self):
         prefs = {
@@ -124,4 +124,4 @@ class AccessibilityPage:
             for key, checks in self._checks.items()
         }
         self.app.state.save_accessibility(prefs)
-        self.app.go_to("wifi")
+        self.app.go_to("data_privacy")

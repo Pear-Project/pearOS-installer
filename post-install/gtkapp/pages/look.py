@@ -85,9 +85,9 @@ class LookPage:
             self.app.set_dark_mode(mode == "dark")
 
     def _on_back(self):
-        self.app.go_to("user")
+        self.app.go_to("piri")
 
     def _on_continue(self):
         mode = getattr(self, "_selected_mode", "light")
         self.app.state.save_look(mode)
-        self.app.go_to("location_services")
+        self.app.go_to("finish")

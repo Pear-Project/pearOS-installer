@@ -111,7 +111,7 @@ class TouchIDSetupPage:
             self._session.cancel()
         if not self._enrolled:
             self.app.state.save_touchid(False)
-        self.app.go_to("finish")
+        self.app.go_to("agreement")
 
     def _on_continue(self):
-        self.app.go_to("finish")
+        self.app.go_to("agreement")

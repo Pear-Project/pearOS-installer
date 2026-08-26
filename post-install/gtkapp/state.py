@@ -85,6 +85,11 @@ class WizardState:
         self.profile_picture = None
         self.theme_mode = "light"
         self.country = None
+        # Set by country.py (True) / migration_assistant.py (False) right
+        # before navigating to "wifi" - lets that page's own skip-if-
+        # online-or-no-wifi-hardware check know which neighbor to bounce
+        # onward to, since it sits between them in both directions.
+        self.wifi_entry_forward = True
 
     # ── Language selection ───────────────────────────────────────────
     def select_language(self, locale_code):

@@ -13,7 +13,16 @@ OPTIONS = [
      "drive, or a Time Machine-style backup."),
     ("windows", "From a Windows PC",
      "Transfer information from a Windows computer on the same network."),
+    ("setup_new", "Set Up as New",
+     "Don't transfer any information now - you can do this later from "
+     "System Settings."),
 ]
+
+_ICON_NAMES = {
+    "pearos": "drive-harddisk-symbolic",
+    "windows": "computer-symbolic",
+    "setup_new": "document-new-symbolic",
+}
 
 
 class MigrationAssistantPage:
@@ -32,7 +41,7 @@ class MigrationAssistantPage:
         )
         content.append(self.description)
 
-        picker = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=24)
+        picker = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=18)
         picker.set_halign(Gtk.Align.CENTER)
         picker.set_margin_top(20)
         content.append(picker)
@@ -41,11 +50,9 @@ class MigrationAssistantPage:
         for key, label_text, desc_text in OPTIONS:
             option = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
             option.add_css_class("look-option")
-            option.set_size_request(230, 160)
+            option.set_size_request(200, 160)
 
-            icon = Gtk.Image.new_from_icon_name(
-                "drive-harddisk-symbolic" if key == "pearos" else "computer-symbolic"
-            )
+            icon = Gtk.Image.new_from_icon_name(_ICON_NAMES[key])
             icon.set_pixel_size(48)
             icon.set_margin_top(10)
             option.append(icon)
@@ -61,7 +68,7 @@ class MigrationAssistantPage:
             desc.add_css_class("description")
             desc.set_wrap(True)
             desc.set_justify(Gtk.Justification.CENTER)
-            desc.set_max_width_chars(26)
+            desc.set_max_width_chars(22)
             option.append(desc)
 
             click = Gtk.GestureClick()
@@ -96,7 +103,8 @@ class MigrationAssistantPage:
         self._selected = key
 
     def _on_back(self):
-        self.app.go_to("data_privacy")
+        self.app.state.wifi_entry_forward = False
+        self.app.go_to("wifi")
 
     def _on_continue(self):
-        self.app.go_to("pearid")
+        self.app.go_to("written_spoken")

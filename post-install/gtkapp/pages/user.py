@@ -214,7 +214,7 @@ class UserPage:
         self.card.forward_button.set_sensitive(ok)
 
     def _on_back(self):
-        self.app.go_to("agreement")
+        self.app.go_to("pearid")
 
     def _on_continue(self):
         err = self.app.state.save_user(
@@ -228,4 +228,4 @@ class UserPage:
         if err:
             self.app.show_alert(err)
             return
-        self.app.go_to("look")
+        self.app.go_to("touchid_enable")
