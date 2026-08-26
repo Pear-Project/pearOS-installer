@@ -47,6 +47,11 @@ class SelectList:
         self.listbox.set_selection_mode(Gtk.SelectionMode.SINGLE)
         for _value, text in self.items:
             row = Gtk.ListBoxRow()
+            # GtkListBoxRow defaults to activatable=True, which several
+            # themes (Adwaita, Breeze) render with a hover chevron hinting
+            # "activating this navigates elsewhere" - wrong here, this is
+            # a single-select list (SelectionMode.SINGLE), not navigation.
+            row.set_activatable(False)
             label = Gtk.Label(label=text)
             label.set_halign(Gtk.Align.START)
             label.set_margin_start(10)
@@ -81,6 +86,11 @@ class SelectList:
             child = self.listbox.get_row_at_index(0)
         for _value, text in self.items:
             row = Gtk.ListBoxRow()
+            # GtkListBoxRow defaults to activatable=True, which several
+            # themes (Adwaita, Breeze) render with a hover chevron hinting
+            # "activating this navigates elsewhere" - wrong here, this is
+            # a single-select list (SelectionMode.SINGLE), not navigation.
+            row.set_activatable(False)
             label = Gtk.Label(label=text)
             label.set_halign(Gtk.Align.START)
             label.set_margin_start(10)
