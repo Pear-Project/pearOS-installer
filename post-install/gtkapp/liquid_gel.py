@@ -250,16 +250,38 @@ class LiquidGelText(Gtk.Widget):
         if native is None:
             return False
         renderer = native.get_renderer()
-        self._shader = Gsk.GLShader.new_from_bytes(GLib.Bytes.new(_SHADER_SRC))
         try:
+            self._shader = Gsk.GLShader.new_from_bytes(GLib.Bytes.new(_SHADER_SRC))
             self._shader.compile(renderer)
-            self._shader_ok = True
-        except GLib.Error:
-            self._shader_ok = False
-        if self._on_shader_result:
-            self._on_shader_result(self._shader_ok)
-            self._on_shader_result = None
+            ok = True
+        except Exception:
+            # Not narrowed to GLib.Error - a broken/virtualized GL driver
+            # (VirtualBox et al.) is exactly the kind of environment likely
+            # to surface something GTK doesn't wrap as cleanly as a real
+            # driver would, and the whole point of this try/except is to
+            # never let this page end up unrenderable.
+            ok = False
+        self._deliver_shader_result(ok)
         return self._shader_ok
+
+    def _deliver_shader_result(self, ok):
+        """Compilation succeeding doesn't guarantee the shader actually
+        renders anything - on at least one real environment (VirtualBox's
+        virtualized GPU) it compiles fine but throws at push_gl_shader()/
+        append_texture() time in do_snapshot() instead, which used to leave
+        the canvas blank forever with no fallback, since the one-shot
+        callback had already fired (with True) after compilation and never
+        got a second chance. True is therefore never treated as final here
+        - only a False (either at compile time, above, or a later downgrade
+        from do_snapshot()'s except clause) actually consumes the
+        callback, since that's the only outcome pages/hello.py needs to
+        react to."""
+        self._shader_ok = ok
+        if self._on_shader_result:
+            callback = self._on_shader_result
+            if not ok:
+                self._on_shader_result = None
+            callback(ok)
 
     def _cropped_wallpaper_texture(self, w, h):
         if self._wallpaper_pixbuf is None:
@@ -408,8 +430,8 @@ class LiquidGelText(Gtk.Widget):
                 snapshot.append_texture(tex, bounds)
                 snapshot.gl_shader_pop_texture()
             snapshot.pop()
-        except GLib.Error:
-            self._shader_ok = False
+        except Exception:
+            self._deliver_shader_result(False)
 
         if zoomed:
             snapshot.restore()
