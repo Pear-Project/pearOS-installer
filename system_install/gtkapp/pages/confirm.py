@@ -46,6 +46,7 @@ class ConfirmPage:
         self._tab_index = 0
 
         card = make_card(800, 600, "app")
+        self.card = card
 
         self.stack = Gtk.Stack()
         self.stack.set_vexpand(True)

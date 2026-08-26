@@ -10,7 +10,7 @@ import subprocess
 import gi
 
 gi.require_version("Gtk", "4.0")
-from gi.repository import Gtk, GLib
+from gi.repository import Gtk
 
 from ..widgets import make_card, centered_overlay, load_scaled_picture
 from ..navbar import Navbar
@@ -87,29 +87,6 @@ class MenuPage:
 
         self.widget = overlay
         self._select(self._selected)
-
-        # Calamares (launched from confirm.py's disk-select Continue) opens
-        # its own separate window - our fullscreen Setup card sitting there
-        # behind/around it just looks broken. Hide it for as long as
-        # Calamares is running, whichever page is showing when that check
-        # runs; it's back the next tick after Calamares exits.
-        GLib.timeout_add_seconds(1, self._sync_card_visibility)
-
-    @staticmethod
-    def _is_calamares_running():
-        try:
-            return (
-                subprocess.run(
-                    ["pgrep", "-x", "calamares"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-                ).returncode
-                == 0
-            )
-        except OSError:
-            return False
-
-    def _sync_card_visibility(self):
-        self.card.set_visible(not self._is_calamares_running())
-        return GLib.SOURCE_CONTINUE
 
     def _build_row(self, key, icon_file):
         row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)

@@ -131,6 +131,36 @@ class InstallerApp(Gtk.Application):
         start_page = os.environ.get("GTKAPP_QA_START", "language")
         self.go_to(start_page)
 
+        # Calamares (launched from confirm.py's EULA Continue) opens its
+        # own separate window - whichever of our own pages is showing at
+        # the time still has its center card sitting there behind it,
+        # which looks broken. The navbar (top menu bar) stays put either
+        # way - only the currently-visible page's own card content hides,
+        # not the whole window - so this is handled once here (looking up
+        # whichever page is current) rather than duplicated per-page.
+        GLib.timeout_add_seconds(1, self._sync_card_for_calamares)
+
+    @staticmethod
+    def _is_calamares_running():
+        try:
+            return (
+                subprocess.run(
+                    ["pgrep", "-x", "calamares"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                ).returncode
+                == 0
+            )
+        except OSError:
+            return False
+
+    def _sync_card_for_calamares(self):
+        running = self._is_calamares_running()
+        name = self.stack.get_visible_child_name() if self.stack else None
+        page = self.pages.get(name) if name else None
+        card = getattr(page, "card", None)
+        if card is not None:
+            card.set_visible(not running)
+        return GLib.SOURCE_CONTINUE
+
     def _build_pages(self):
         from .pages.language import LanguagePage
         from .pages.examining import ExaminingPage
