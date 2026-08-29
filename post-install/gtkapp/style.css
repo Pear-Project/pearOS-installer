@@ -354,7 +354,7 @@ window.dark-mode .back-arrow {
 .textbox {
   min-width: 300px;
   min-height: 16px;
-  padding: 7px 16px;
+  padding: 6px 16px;
   font-size: 14px;
   border: 1px solid #c5c5c5;
   border-radius: 999px; /* pill-shaped, like macOS text fields */
@@ -405,8 +405,8 @@ window.dark-mode .textbox {
 
 /* ── Profile pictures ─────────────────────────────────────────────── */
 .profile-picture-item {
-  min-width: 80px;
-  min-height: 80px;
+  min-width: 51px;
+  min-height: 51px;
   border-radius: 999px;
   border: 3px solid transparent;
   background-color: #f0f0f0;
