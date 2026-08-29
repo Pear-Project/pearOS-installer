@@ -140,8 +140,16 @@ def make_accessibility_footer():
     footer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
     footer.add_css_class("accessibility-footer")
     footer.set_halign(Gtk.Align.CENTER)
-    footer.set_valign(Gtk.Align.END)
-    footer.set_margin_bottom(28)
+    # Measured off the reference: ~32px between the card's bottom edge and
+    # this text, scaled to this app's 800-wide (vs. the reference's 723px)
+    # card. Anchoring this to the *card* (a sibling in one centered column,
+    # see page_root below) instead of the window's bottom edge is what
+    # actually keeps that gap constant - the previous version pinned it to
+    # the window bottom with a fixed margin, which put it right instead of
+    # ~35px under the card only at the one window size it was tuned against
+    # and left a ~175px gap on the fullscreen 1080-tall window it actually
+    # runs in.
+    footer.set_margin_top(35)
     for text in (
         "Press the escape key to hear how to set up your pearOS Computer with VoiceOver.",
         "Press Command-Option-F5 to view accessibility options.",
@@ -153,15 +161,18 @@ def make_accessibility_footer():
 
 
 def page_root(content_widget, on_back, on_forward, forward_label="Continue"):
-    """Full page: blurred wallpaper background + centered .app card."""
+    """Full page: blurred wallpaper background + centered .app card, with
+    the accessibility footer stacked directly under it (one column, so the
+    card-to-footer gap stays fixed regardless of window height) instead of
+    the footer being independently anchored to the window's bottom edge."""
     bg = Background(sharp=False)
     card = AppCard(content_widget, on_back, on_forward, forward_label)
-    centering = Gtk.Box()
+    centering = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
     centering.set_halign(Gtk.Align.CENTER)
     centering.set_valign(Gtk.Align.CENTER)
     centering.set_hexpand(True)
     centering.set_vexpand(True)
     centering.append(card.widget)
+    centering.append(make_accessibility_footer())
     bg.add_overlay(centering)
-    bg.add_overlay(make_accessibility_footer())
     return bg, card
