@@ -93,6 +93,16 @@ window.dark-mode .profile-picture-heading {
   background-color: #ffffff; /* view_bg_color (light) */
 }
 
+/* The reference list's border is blue, not gray, in every sample taken
+   across its height (measured ~#87a5d1) - that's macOS's focus ring, shown
+   because this list is the page's initially-focused control. GtkWidget
+   supports :focus-within out of the box (matches when any descendant,
+   e.g. a row, holds focus) - no manual focus-event wiring needed. */
+.wizard-list:focus-within {
+  border-color: #6f97cf;
+  border-width: 2px;
+}
+
 window.dark-mode .wizard-list {
   background-color: #242424; /* view_bg_color (dark) */
   border-color: rgba(255, 255, 255, 0.16);
@@ -102,6 +112,7 @@ window.dark-mode .wizard-list {
   padding: 0px 8px;
   border-radius: 0;
   background-color: #ffffff;
+  background-image: none;
   color: #363636; /* window_fg_color (light) */
   font-size: 12px;
   min-height: 0;
@@ -112,16 +123,28 @@ window.dark-mode .wizard-list row {
   color: #ffffff; /* window_fg_color (dark) */
 }
 
+/* This is a fixed single-select list, not a navigable/clickable one
+   (macOS's own picker doesn't highlight rows on mouse-over either, only
+   the actual selection) - hover shouldn't paint anything at all. Both
+   background-color AND background-image need resetting: the system theme
+   paints its own (much darker) background-image on row:hover, which sits
+   on top of and hides a background-color-only override - same failure
+   mode as the nav-button and scrollbar fixes elsewhere in this file. */
 .wizard-list row:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background: #ffffff;
+  box-shadow: none;
+  outline: none;
 }
 
 window.dark-mode .wizard-list row:hover {
-  background-color: rgba(255, 255, 255, 0.08);
+  background: #242424;
+  box-shadow: none;
+  outline: none;
 }
 
 .wizard-list row:selected {
   background-color: #0964d1; /* accent_bg_color */
+  background-image: none;
   color: #ffffff; /* accent_fg_color */
   font-weight: bold;
 }
@@ -132,18 +155,23 @@ window.dark-mode .wizard-list row:hover {
    ~2-4px inset from the edges. */
 .wizard-list scrollbar {
   background: none;
+  background-image: none;
   border: none;
   margin: 3px;
 }
 
 .wizard-list scrollbar trough {
   background: none;
+  background-image: none;
   border: none;
+  box-shadow: none;
   min-width: 9px;
 }
 
 .wizard-list scrollbar slider {
   background-color: rgba(90, 90, 90, 0.75);
+  background-image: none;
+  box-shadow: none;
   border: none;
   border-radius: 999px;
   min-width: 9px;
@@ -152,6 +180,7 @@ window.dark-mode .wizard-list row:hover {
 
 .wizard-list scrollbar slider:hover {
   background-color: rgba(70, 70, 70, 0.85);
+  background-image: none;
 }
 
 /* ── Buttons ───────────────────────────────────────────────────────── */
