@@ -198,6 +198,13 @@ window.dark-mode .nav-button {
   opacity: 0.7;
 }
 
+.accessibility-footer-label {
+  color: #ffffff;
+  font-family: "Sen";
+  font-weight: bold;
+  font-size: 12px;
+}
+
 .back-arrow {
   color: #0570fb;
 }

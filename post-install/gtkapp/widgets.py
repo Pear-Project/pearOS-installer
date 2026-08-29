@@ -130,6 +130,28 @@ class AppCard:
         return self.overlay
 
 
+def make_accessibility_footer():
+    """The two-line VoiceOver/accessibility hint macOS's own Setup
+    Assistant prints below the card on every screen - purely informational
+    text (there's no actual VoiceOver setup flow behind it here), but it's
+    part of the reference chrome so it's reproduced verbatim, device name
+    rebranded to match this app's own "pearOS Computer" wording (agreement.py,
+    pearid.py) instead of "Mac"."""
+    footer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+    footer.add_css_class("accessibility-footer")
+    footer.set_halign(Gtk.Align.CENTER)
+    footer.set_valign(Gtk.Align.END)
+    footer.set_margin_bottom(28)
+    for text in (
+        "Press the escape key to hear how to set up your pearOS Computer with VoiceOver.",
+        "Press Command-Option-F5 to view accessibility options.",
+    ):
+        label = Gtk.Label(label=text)
+        label.add_css_class("accessibility-footer-label")
+        footer.append(label)
+    return footer
+
+
 def page_root(content_widget, on_back, on_forward, forward_label="Continue"):
     """Full page: blurred wallpaper background + centered .app card."""
     bg = Background(sharp=False)
@@ -141,4 +163,5 @@ def page_root(content_widget, on_back, on_forward, forward_label="Continue"):
     centering.set_vexpand(True)
     centering.append(card.widget)
     bg.add_overlay(centering)
+    bg.add_overlay(make_accessibility_footer())
     return bg, card
