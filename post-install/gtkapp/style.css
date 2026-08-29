@@ -79,6 +79,32 @@ window.dark-mode .profile-picture-heading {
   color: #9a9aa2;
 }
 
+/* ── written_spoken.py's summary rows ──────────────────────────────── */
+.summary-row-icon {
+  color: #1476fa;
+}
+
+.summary-row-label {
+  font-family: "Sen";
+  font-size: 13px;
+  font-weight: bold;
+  color: #333333;
+}
+
+.summary-row-value {
+  font-family: "Sen";
+  font-size: 12px;
+  color: #818181;
+}
+
+window.dark-mode .summary-row-label {
+  color: #f2f2f2;
+}
+
+window.dark-mode .summary-row-value {
+  color: #9a9aa2;
+}
+
 /* ── migration_assistant.py's radio list ──────────────────────────────
    Measured off the reference: label text ~13px, ~23px row-to-row spacing,
    left-aligned starting flush with the icon/title/paragraph above it. */
