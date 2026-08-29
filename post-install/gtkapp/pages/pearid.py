@@ -32,17 +32,17 @@ class PearIDPage:
         content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         content.set_hexpand(True)
 
-        icon = AccountServicesIcon(height=48)
+        icon = AccountServicesIcon(height=70)
         icon.set_halign(Gtk.Align.START)
         icon.set_margin_start(_LEFT_MARGIN + 25)
-        icon.set_margin_top(65)
+        icon.set_margin_top(85)
         content.append(icon)
 
         self.title = Gtk.Label(label="Sign In with Your PearID")
         self.title.add_css_class("title")
         self.title.set_halign(Gtk.Align.START)
         self.title.set_margin_start(_LEFT_MARGIN)
-        self.title.set_margin_top(22)
+        self.title.set_margin_top(34)
         content.append(self.title)
 
         self.description = Gtk.Label(
