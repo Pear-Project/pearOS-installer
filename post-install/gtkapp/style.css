@@ -53,7 +53,9 @@ window.dark-mode .app {
 .title {
   font-family: "Sen";
   font-weight: 900;
-  font-size: 20px;
+  font-size: 17px; /* measured off a real macOS Setup Assistant screenshot:
+                       title text was 218px wide in a 723-wide card - at
+                       our previous 20px this rendered ~34% too wide */
   color: #333333;
 }
 

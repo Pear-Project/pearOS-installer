@@ -50,12 +50,17 @@ class SelectList:
         """items: list of (value, display_text)."""
         self.items = list(items)
         self.listbox = Gtk.ListBox()
-        self.listbox.add_css_class("wizard-list")
         self.listbox.set_selection_mode(Gtk.SelectionMode.SINGLE)
         for _value, text in self.items:
             self.listbox.append(_make_row(text))
 
         scroller = Gtk.ScrolledWindow()
+        # The framed-box border/radius/background belongs on the scroller
+        # (the actually-bounded viewport), not the listbox - the listbox is
+        # as tall as its full, unclipped row count, so a border drawn on it
+        # was only ever visible on 3 sides; the "open at the bottom" look
+        # every earlier screenshot had was this, not a sizing issue.
+        scroller.add_css_class("wizard-list")
         scroller.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         scroller.set_child(self.listbox)
         # Without this, the first/last row's square background corners
@@ -66,21 +71,24 @@ class SelectList:
         # its child's own size - propagate=False alone (the previous code
         # here) only floors the *minimum* size and left the actual width
         # shrunk to the child's own minimum, ~190px instead of the intended
-        # 420px, with no visible scrollbar/border framing to match.
+        # width, with no visible scrollbar/border framing to match.
         scroller.set_propagate_natural_width(True)
         scroller.set_propagate_natural_height(True)
-        scroller.set_min_content_width(420)
-        scroller.set_max_content_width(420)
-        scroller.set_min_content_height(200)
-        scroller.set_max_content_height(200)
+        # Measured directly off a real macOS Setup Assistant screenshot
+        # (410x206 in a 723-wide card) and scaled to this app's 800-wide
+        # card (factor 799/723 ~= 1.105).
+        scroller.set_min_content_width(453)
+        scroller.set_max_content_width(453)
+        scroller.set_min_content_height(228)
+        scroller.set_max_content_height(228)
         # Belt-and-suspenders: min/max-content-* alone was observed to be
         # ignored (the scroller kept shrinking to ~190px, the listbox's own
         # minimum) - set_size_request is a hard floor GTK always honors
         # regardless of what's driving that discrepancy.
-        scroller.set_size_request(420, 200)
+        scroller.set_size_request(453, 228)
         scroller.set_halign(Gtk.Align.CENTER)
         scroller.set_vexpand(False)
-        scroller.set_margin_top(40)
+        scroller.set_margin_top(50)
         self.widget = scroller
 
     def set_items(self, items):
