@@ -517,10 +517,48 @@ window.dark-mode .license textview {
 
 .license {
   background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
 }
 
 window.dark-mode .license {
   background-color: #242424;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.license scrollbar {
+  background: none;
+  background-image: none;
+  border: none;
+  margin: 0;
+  min-width: 15px;
+}
+
+.license scrollbar trough {
+  background: none;
+  background-image: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  margin: 0 3px;
+  min-width: 0;
+}
+
+.license scrollbar slider {
+  background-color: rgba(90, 90, 90, 0.75);
+  background-image: none;
+  box-shadow: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  border-radius: 999px;
+  min-width: 9px;
+  min-height: 20px;
+}
+
+.license scrollbar slider:hover {
+  background-color: rgba(70, 70, 70, 0.85);
+  background-image: none;
 }
 
 /* ── Timezone UTC checkbox row ────────────────────────────────────── */

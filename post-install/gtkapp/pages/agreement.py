@@ -179,6 +179,7 @@ class AgreementPage:
 
         scroller = Gtk.ScrolledWindow()
         scroller.add_css_class("license")
+        scroller.set_overflow(Gtk.Overflow.HIDDEN)
         scroller.set_size_request(640, 320)
         scroller.set_hexpand(True)
         scroller.set_vexpand(True)
