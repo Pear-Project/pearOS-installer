@@ -126,6 +126,34 @@ window.dark-mode .wizard-list row:hover {
   font-weight: bold;
 }
 
+/* macOS's scrollbar here is a thin floating gray pill with no visible
+   track, inset a few px from the list's own border - not GTK's default
+   thick dark bar+trough. Measured off the reference: ~9px wide thumb,
+   ~2-4px inset from the edges. */
+.wizard-list scrollbar {
+  background: none;
+  border: none;
+  margin: 3px;
+}
+
+.wizard-list scrollbar trough {
+  background: none;
+  border: none;
+  min-width: 9px;
+}
+
+.wizard-list scrollbar slider {
+  background-color: rgba(90, 90, 90, 0.75);
+  border: none;
+  border-radius: 999px;
+  min-width: 9px;
+  min-height: 20px;
+}
+
+.wizard-list scrollbar slider:hover {
+  background-color: rgba(70, 70, 70, 0.85);
+}
+
 /* ── Buttons ───────────────────────────────────────────────────────── */
 .nav-button {
   background-color: #ffffff;

@@ -94,10 +94,12 @@ class WizardApp(Gtk.Application):
 
         fonts.register_all()
 
-        # macOS's Setup Assistant list boxes keep a persistent, always-drawn
-        # scrollbar track (not GTK's default fade-on-hover overlay one) -
-        # this is a global GtkSettings knob, not something a per-widget CSS
-        # rule can flip, so it has to be set once here.
+        # macOS's scrollbar here is always drawn, not GTK's default
+        # overlay-style one that only appears on hover/scroll and fades out
+        # otherwise (which is invisible in a static screenshot, unlike the
+        # reference) - classic mode keeps it permanently visible; the
+        # thin-pill-not-thick-bar look itself comes from the .wizard-list
+        # scrollbar/trough/slider rules in style.css, not from this.
         Gtk.Settings.get_default().set_property("gtk-overlay-scrolling", False)
 
         provider = Gtk.CssProvider()
