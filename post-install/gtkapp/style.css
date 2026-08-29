@@ -81,6 +81,10 @@ window.dark-mode .profile-picture-heading {
    Colors pulled from the real pearOS GTK4 theme
    (dpkg/pearos-settings/usr/share/themes/pearOS{,-dark}/gtk-4.0/gtk.css):
    view_bg_color, window_fg_color, accent_bg_color, borders. */
+.globe-icon {
+  color: #1476fa; /* accent_bg_color-ish blue, matches nav-button/back-arrow */
+}
+
 .wizard-list {
   border: 1px solid rgba(0, 0, 0, 0.2);
   border-radius: 6px;
@@ -93,11 +97,12 @@ window.dark-mode .wizard-list {
 }
 
 .wizard-list row {
-  padding: 1px 8px;
+  padding: 0px 8px;
   border-radius: 0;
   background-color: #ffffff;
   color: #363636; /* window_fg_color (light) */
-  font-size: 13px;
+  font-size: 12px;
+  min-height: 0;
 }
 
 window.dark-mode .wizard-list row {
@@ -114,8 +119,9 @@ window.dark-mode .wizard-list row:hover {
 }
 
 .wizard-list row:selected {
-  background-color: #0088ff; /* accent_bg_color */
+  background-color: #0964d1; /* accent_bg_color */
   color: #ffffff; /* accent_fg_color */
+  font-weight: bold;
 }
 
 /* ── Buttons ───────────────────────────────────────────────────────── */

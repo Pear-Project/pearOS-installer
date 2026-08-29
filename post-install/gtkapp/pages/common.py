@@ -3,35 +3,25 @@ which all reproduce the same `.list` <select size=9> markup."""
 import gi
 
 gi.require_version("Gtk", "4.0")
-gi.require_version("GdkPixbuf", "2.0")
-from gi.repository import Gtk, GdkPixbuf
-
-from .. import state as state_mod
-
-WORLDMAP_PATH = __import__("os").path.join(state_mod.RESOURCES_DIR, "country.png")
+from gi.repository import Gtk
 
 
 def make_worldmap():
-    # GtkPicture.measure() reports the source image's *intrinsic* size
-    # (360x360) as its natural size no matter what set_size_request() or
-    # Gtk.Overflow.HIDDEN say - overflow only clips painting/allocation,
-    # it does not change what the widget asks for during layout, so a
-    # naive "wrap it in a 70x70 clipping box" doesn't actually stop this
-    # from asking for 360px of width. Pre-scaling the pixbuf to the exact
-    # display size is what actually fixes it: now its intrinsic size *is*
-    # 70x70, so there's nothing left to overflow in the first place.
-    pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(WORLDMAP_PATH, 70, 70, True)
-    pic = Gtk.Picture.new_for_pixbuf(pixbuf)
-    pic.set_content_fit(Gtk.ContentFit.CONTAIN)
-    pic.set_can_shrink(True)
-    pic.set_hexpand(False)
-    pic.set_vexpand(False)
+    # macOS's own "Select Your Country or Region" glyph is a circle outline
+    # with continent silhouettes inside - "globe-symbolic" (shipped by the
+    # breeze icon theme this OS already depends on) is the closest match
+    # available without commissioning new vector art: same circle+continents
+    # composition, unlike the flat 2-tone raster globe this used to be.
+    # Symbolic icons render in whatever color is set on them, so the blue
+    # tint comes from the "globe-icon" CSS class, not the icon data itself.
+    icon = Gtk.Image.new_from_icon_name("globe-symbolic")
+    icon.set_pixel_size(76)
+    icon.add_css_class("globe-icon")
 
     box = Gtk.Box()
-    box.set_size_request(70, 70)
     box.set_halign(Gtk.Align.CENTER)
-    box.set_margin_top(50)
-    box.append(pic)
+    box.set_margin_top(55)
+    box.append(icon)
     return box
 
 
@@ -45,8 +35,8 @@ def _make_row(text):
     label = Gtk.Label(label=text)
     label.set_halign(Gtk.Align.START)
     label.set_margin_start(10)
-    label.set_margin_top(1)
-    label.set_margin_bottom(1)
+    label.set_margin_top(0)
+    label.set_margin_bottom(0)
     row.set_child(label)
     return row
 
@@ -90,7 +80,7 @@ class SelectList:
         scroller.set_size_request(420, 200)
         scroller.set_halign(Gtk.Align.CENTER)
         scroller.set_vexpand(False)
-        scroller.set_margin_top(10)
+        scroller.set_margin_top(40)
         self.widget = scroller
 
     def set_items(self, items):
