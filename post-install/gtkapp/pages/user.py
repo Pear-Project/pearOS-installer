@@ -48,7 +48,7 @@ class UserPage:
         self.title.add_css_class("title")
         self.title.set_halign(Gtk.Align.START)
         self.title.set_margin_start(_LEFT_MARGIN)
-        self.title.set_margin_top(123)
+        self.title.set_margin_top(73)
         content.append(self.title)
 
         self.description = Gtk.Label(
@@ -193,6 +193,8 @@ class UserPage:
             btn = Gtk.ToggleButton()
             btn.add_css_class("flat")
             btn.add_css_class("profile-picture-item")
+            btn.set_halign(Gtk.Align.CENTER)
+            btn.set_valign(Gtk.Align.CENTER)
             # "flat" alone wasn't enough - the theme's :checked state still
             # painted its own square-cornered background/indicator behind
             # our content (visible as a colored wedge on the selected
