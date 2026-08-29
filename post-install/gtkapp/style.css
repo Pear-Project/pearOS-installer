@@ -460,6 +460,13 @@ window.dark-mode .look-option-label {
   color: #e6e6e6;
 }
 
+/* ── data_privacy.py's info link ──────────────────────────────────── */
+.privacy-learn-more {
+  font-family: "Sen";
+  font-size: 13px;
+  color: #1476fa;
+}
+
 /* ── accessibility.py's category cards ────────────────────────────── */
 .accessibility-card {
   border-radius: 10px;
