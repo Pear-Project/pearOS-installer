@@ -105,7 +105,7 @@ class WizardApp(Gtk.Application):
         provider = Gtk.CssProvider()
         provider.load_from_path(_STYLE_CSS)
         Gtk.StyleContext.add_provider_for_display(
-            Gdk.Display.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+            Gdk.Display.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_USER
         )
 
         self.window = Gtk.ApplicationWindow(application=self)
