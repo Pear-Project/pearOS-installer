@@ -82,21 +82,22 @@ window.dark-mode .profile-picture-heading {
    (dpkg/pearos-settings/usr/share/themes/pearOS{,-dark}/gtk-4.0/gtk.css):
    view_bg_color, window_fg_color, accent_bg_color, borders. */
 .wizard-list {
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
   background-color: #ffffff; /* view_bg_color (light) */
 }
 
 window.dark-mode .wizard-list {
   background-color: #242424; /* view_bg_color (dark) */
-  border-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
 }
 
 .wizard-list row {
-  padding: 6px 10px;
-  border-radius: 8px;
+  padding: 1px 8px;
+  border-radius: 0;
   background-color: #ffffff;
   color: #363636; /* window_fg_color (light) */
+  font-size: 13px;
 }
 
 window.dark-mode .wizard-list row {
@@ -120,6 +121,12 @@ window.dark-mode .wizard-list row:hover {
 /* ── Buttons ───────────────────────────────────────────────────────── */
 .nav-button {
   background-color: #ffffff;
+  background-image: none; /* the system theme's own button skin paints an
+                              opaque background-image layer on top of
+                              background-color - without this reset it wins
+                              the paint order and the button reads as the
+                              theme's dark button color instead of ours */
+  border: none;
   color: #2b2b2b;
   border-radius: 999px;
   padding: 8px 20px;
@@ -138,6 +145,7 @@ window.dark-mode .wizard-list row:hover {
 
 window.dark-mode .nav-button {
   background-color: #3a3b42;
+  background-image: none;
   color: #f2f2f2;
 }
 

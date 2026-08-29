@@ -35,9 +35,26 @@ def make_worldmap():
     return box
 
 
+def _make_row(text):
+    row = Gtk.ListBoxRow()
+    # GtkListBoxRow defaults to activatable=True, which several themes
+    # (Adwaita, Breeze) render with a hover chevron hinting "activating this
+    # navigates elsewhere" - wrong here, this is a single-select list
+    # (SelectionMode.SINGLE), not navigation.
+    row.set_activatable(False)
+    label = Gtk.Label(label=text)
+    label.set_halign(Gtk.Align.START)
+    label.set_margin_start(10)
+    label.set_margin_top(1)
+    label.set_margin_bottom(1)
+    row.set_child(label)
+    return row
+
+
 class SelectList:
-    """A scrollable single-select list, sized/styled like the original
-    `<select class="list" size=9>` (350x200, centered)."""
+    """A scrollable single-select list, matching macOS Setup Assistant's
+    compact ~350x200 country/language/timezone picker (tight single-line
+    rows in a bordered box), not a full-height touch-style list."""
 
     def __init__(self, items):
         """items: list of (value, display_text)."""
@@ -46,33 +63,31 @@ class SelectList:
         self.listbox.add_css_class("wizard-list")
         self.listbox.set_selection_mode(Gtk.SelectionMode.SINGLE)
         for _value, text in self.items:
-            row = Gtk.ListBoxRow()
-            # GtkListBoxRow defaults to activatable=True, which several
-            # themes (Adwaita, Breeze) render with a hover chevron hinting
-            # "activating this navigates elsewhere" - wrong here, this is
-            # a single-select list (SelectionMode.SINGLE), not navigation.
-            row.set_activatable(False)
-            label = Gtk.Label(label=text)
-            label.set_halign(Gtk.Align.START)
-            label.set_margin_start(10)
-            label.set_margin_top(3)
-            label.set_margin_bottom(3)
-            row.set_child(label)
-            self.listbox.append(row)
+            self.listbox.append(_make_row(text))
 
         scroller = Gtk.ScrolledWindow()
         scroller.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         scroller.set_child(self.listbox)
-        # min/max-content-* (not set_size_request) are what actually caps a
-        # GtkScrolledWindow: size_request alone is only a floor, so a tall
-        # GtkListBox (18 languages, etc.) was pushing the whole page past the
-        # 800x600 card and off the bottom of the window.
-        scroller.set_propagate_natural_width(False)
-        scroller.set_propagate_natural_height(False)
-        scroller.set_min_content_width(520)
-        scroller.set_max_content_width(520)
-        scroller.set_min_content_height(220)
-        scroller.set_max_content_height(220)
+        # Without this, the first/last row's square background corners
+        # poke out past the box's rounded border corners.
+        scroller.set_overflow(Gtk.Overflow.HIDDEN)
+        # propagate_natural_* + matching min/max-content-* is the idiomatic
+        # GTK4 way to pin a GtkScrolledWindow to an exact size regardless of
+        # its child's own size - propagate=False alone (the previous code
+        # here) only floors the *minimum* size and left the actual width
+        # shrunk to the child's own minimum, ~190px instead of the intended
+        # 420px, with no visible scrollbar/border framing to match.
+        scroller.set_propagate_natural_width(True)
+        scroller.set_propagate_natural_height(True)
+        scroller.set_min_content_width(420)
+        scroller.set_max_content_width(420)
+        scroller.set_min_content_height(200)
+        scroller.set_max_content_height(200)
+        # Belt-and-suspenders: min/max-content-* alone was observed to be
+        # ignored (the scroller kept shrinking to ~190px, the listbox's own
+        # minimum) - set_size_request is a hard floor GTK always honors
+        # regardless of what's driving that discrepancy.
+        scroller.set_size_request(420, 200)
         scroller.set_halign(Gtk.Align.CENTER)
         scroller.set_vexpand(False)
         scroller.set_margin_top(10)
@@ -85,19 +100,7 @@ class SelectList:
             self.listbox.remove(child)
             child = self.listbox.get_row_at_index(0)
         for _value, text in self.items:
-            row = Gtk.ListBoxRow()
-            # GtkListBoxRow defaults to activatable=True, which several
-            # themes (Adwaita, Breeze) render with a hover chevron hinting
-            # "activating this navigates elsewhere" - wrong here, this is
-            # a single-select list (SelectionMode.SINGLE), not navigation.
-            row.set_activatable(False)
-            label = Gtk.Label(label=text)
-            label.set_halign(Gtk.Align.START)
-            label.set_margin_start(10)
-            label.set_margin_top(3)
-            label.set_margin_bottom(3)
-            row.set_child(label)
-            self.listbox.append(row)
+            self.listbox.append(_make_row(text))
         # Rebuilding the row set (country.py's IP-suggestion reorder is the
         # only caller) can leave stale paint behind under VirtualBox's
         # software renderer, which doesn't always repaint the old rows'
