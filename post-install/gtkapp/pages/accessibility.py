@@ -1,4 +1,10 @@
-"""Accessibility: 4 categories (Vision/Motor/Hearing/Cognitive).
+"""Accessibility: 4 categories (Vision/Motor/Hearing/Cognitive), matching
+macOS's real layout - left-aligned icon+title+paragraph, then a row of 4
+selectable category cards (not the plain toggle-button tabs this used to
+have), each revealing that category's settings panel below the grid. The
+button is labeled "Not Now" like the reference, since this screen has no
+separate skip action - continuing past it already means "not now" for
+whatever wasn't turned on.
 
 This page runs as the live 'default' user, before the real account exists
 (useradd happens near the end of post_setup) - so it can't apply these
@@ -12,9 +18,21 @@ import gi
 gi.require_version("Gtk", "4.0")
 from gi.repository import Gtk
 
-from ..widgets import page_root, make_title
+from ..widgets import page_root
+from .accessibility_icons import CategoryIcon, UniversalAccessIcon
 
 CATEGORIES = ["Vision", "Motor", "Hearing", "Cognitive"]
+_ICON_KINDS = {"Vision": "vision", "Motor": "motor", "Hearing": "hearing", "Cognitive": "cognitive"}
+
+# Measured off a real macOS Setup Assistant screenshot of this exact page
+# (icon/title/paragraph/cards all started at x=73-77 in a 723-wide card,
+# noticeably further left than migration_assistant.py/written_spoken.py's
+# 159px - each of these detail screens apparently has its own margin in
+# the real app, not one shared constant) and scaled to this app's
+# 800-wide card (factor 799/723 ~= 1.105).
+_LEFT_MARGIN = 81
+_CARD_SIZE = 141
+_CARD_GAP = 12
 
 
 class AccessibilityPage:
@@ -22,47 +40,103 @@ class AccessibilityPage:
         self.app = app
         self._checks = {}
 
-        content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
+        content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         content.set_hexpand(True)
-        content.set_vexpand(True)
-        content.set_valign(Gtk.Align.CENTER)
-        self.title = make_title("Accessibility")
+
+        icon = UniversalAccessIcon(size=76)
+        icon.set_halign(Gtk.Align.START)
+        icon.set_margin_start(_LEFT_MARGIN)
+        icon.set_margin_top(70)
+        content.append(icon)
+
+        self.title = Gtk.Label(label="Accessibility")
+        self.title.add_css_class("title")
+        self.title.set_halign(Gtk.Align.START)
+        self.title.set_margin_start(_LEFT_MARGIN)
+        self.title.set_margin_top(24)
         content.append(self.title)
 
-        tabs = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-        tabs.set_halign(Gtk.Align.CENTER)
-        tabs.set_margin_top(6)
-        tabs.set_margin_bottom(10)
-        content.append(tabs)
+        self.description = Gtk.Label(
+            label=(
+                "Accessibility features adapt this pearOS Computer to your "
+                "individual needs. You can turn them on now to help you "
+                "finish setting up, and further customize them later in "
+                "System Settings. See what's available in each of the "
+                "categories below."
+            )
+        )
+        self.description.add_css_class("description")
+        self.description.set_wrap(True)
+        self.description.set_justify(Gtk.Justification.LEFT)
+        self.description.set_halign(Gtk.Align.START)
+        self.description.set_margin_start(_LEFT_MARGIN)
+        self.description.set_margin_top(8)
+        self.description.set_max_width_chars(58)
+        content.append(self.description)
+
+        cards = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=_CARD_GAP)
+        cards.set_halign(Gtk.Align.START)
+        cards.set_margin_start(_LEFT_MARGIN)
+        cards.set_margin_top(26)
+        content.append(cards)
 
         self.stack = Gtk.Stack()
         self.stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
-        self.stack.set_halign(Gtk.Align.CENTER)
+        self.stack.set_halign(Gtk.Align.START)
+        self.stack.set_margin_start(_LEFT_MARGIN)
+        self.stack.set_margin_top(20)
         content.append(self.stack)
 
-        self._tab_buttons = {}
+        self._card_boxes = {}
         first = None
         for name in CATEGORIES:
-            btn = Gtk.ToggleButton(label=name)
-            btn.add_css_class("nav-button")
+            card = self._make_card(name)
+            click = Gtk.GestureClick()
+            click.connect("released", self._on_card_clicked, name)
+            card.add_controller(click)
+            cards.append(card)
+            self._card_boxes[name] = card
             if first is None:
-                first = btn
-            else:
-                btn.set_group(first)
-            btn.connect("toggled", self._on_tab_toggled, name)
-            tabs.append(btn)
-            self._tab_buttons[name] = btn
+                first = name
 
         self.stack.add_named(self._build_vision(), "Vision")
         self.stack.add_named(self._build_motor(), "Motor")
         self.stack.add_named(self._build_hearing(), "Hearing")
         self.stack.add_named(self._build_cognitive(), "Cognitive")
 
-        first.set_active(True)
+        self._select_card(first)
 
         self.widget, self.card = page_root(
-            content, on_back=self._on_back, on_forward=self._on_continue, forward_label="Continue"
+            content, on_back=self._on_back, on_forward=self._on_continue, forward_label="Not Now"
         )
+
+    def _make_card(self, name):
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        box.add_css_class("accessibility-card")
+        box.set_size_request(_CARD_SIZE, _CARD_SIZE)
+        box.set_halign(Gtk.Align.CENTER)
+        box.set_valign(Gtk.Align.CENTER)
+
+        icon = CategoryIcon(_ICON_KINDS[name], size=40)
+        icon.set_halign(Gtk.Align.CENTER)
+        icon.set_margin_top(14)
+        box.append(icon)
+
+        label = Gtk.Label(label=name)
+        label.add_css_class("accessibility-card-label")
+        box.append(label)
+        return box
+
+    def _select_card(self, name):
+        for n, box in self._card_boxes.items():
+            if n == name:
+                box.add_css_class("selected")
+            else:
+                box.remove_css_class("selected")
+        self.stack.set_visible_child_name(name)
+
+    def _on_card_clicked(self, _gesture, _n_press, _x, _y, name):
+        self._select_card(name)
 
     def _panel(self):
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
@@ -107,10 +181,6 @@ class AccessibilityPage:
         # either one turning it on is enough - see _on_continue().
         self._check_row(box, "reduce_motion", "Reduce Motion")
         return box
-
-    def _on_tab_toggled(self, btn, name):
-        if btn.get_active():
-            self.stack.set_visible_child_name(name)
 
     def on_show(self):
         self.title.set_label(self.app.t("accessibility.title", "Accessibility"))

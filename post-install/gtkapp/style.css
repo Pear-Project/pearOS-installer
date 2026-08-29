@@ -130,6 +130,26 @@ window.dark-mode .migration-radio {
   color: #f2f2f2;
 }
 
+/* Same background-image-over-color theme bleed as the grouped radio fix
+   below, but for plain (non-grouped) GtkCheckButtons - these render as
+   solid black squares app-wide (accessibility.py, analytics.py,
+   location_services.py, screen_time.py, timezone.py, piri.py) without
+   this. Applied globally, not scoped to one page's class, since it's a
+   system theme bug affecting every checkbox, not a per-page style choice. */
+check:not(:checked) {
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+  border: 2px solid #c6c6c6;
+  border-radius: 4px;
+  min-width: 16px;
+  min-height: 16px;
+}
+
+window.dark-mode check:not(:checked) {
+  border-color: #55565c;
+}
+
 /* Grouped GtkCheckButtons use a "radio" sub-node (per GTK4 docs) - the
    system theme paints its unselected state as a solid dark filled circle
    via background-image (same failure mode fixed elsewhere in this file
@@ -438,6 +458,38 @@ window.dark-mode .textbox {
 
 window.dark-mode .look-option-label {
   color: #e6e6e6;
+}
+
+/* ── accessibility.py's category cards ────────────────────────────── */
+.accessibility-card {
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background-color: #ffffff;
+}
+
+.accessibility-card:hover {
+  border-color: #57a2ff;
+}
+
+.accessibility-card.selected {
+  border-color: #0570fb;
+  border-width: 2px;
+}
+
+window.dark-mode .accessibility-card {
+  background-color: #242424;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.accessibility-card-label {
+  font-family: "Sen";
+  font-weight: bold;
+  font-size: 13px;
+  color: #333333;
+}
+
+window.dark-mode .accessibility-card-label {
+  color: #f2f2f2;
 }
 
 /* ── Terms and conditions ─────────────────────────────────────────── */
