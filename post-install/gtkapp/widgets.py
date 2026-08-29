@@ -132,11 +132,14 @@ class AppCard:
 
 def make_accessibility_footer():
     """The two-line VoiceOver/accessibility hint macOS's own Setup
-    Assistant prints below the card on every screen - purely informational
-    text (there's no actual VoiceOver setup flow behind it here), but it's
-    part of the reference chrome so it's reproduced verbatim, device name
-    rebranded to match this app's own "pearOS Computer" wording (agreement.py,
-    pearid.py) instead of "Mac"."""
+    Assistant prints below the card - checked against reference
+    screenshots of two different screens: present on the country/region
+    page, absent on migration_assistant, so it's real macOS behavior that
+    this only shows on the earliest screen(s), not global chrome on every
+    page. Only country.py passes show_accessibility_footer=True to
+    page_root for this reason. Device name rebranded to match this app's
+    own "pearOS Computer" wording (agreement.py, pearid.py) instead of
+    "Mac"."""
     footer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
     footer.add_css_class("accessibility-footer")
     footer.set_halign(Gtk.Align.CENTER)
@@ -160,11 +163,12 @@ def make_accessibility_footer():
     return footer
 
 
-def page_root(content_widget, on_back, on_forward, forward_label="Continue"):
+def page_root(content_widget, on_back, on_forward, forward_label="Continue", show_accessibility_footer=False):
     """Full page: blurred wallpaper background + centered .app card, with
-    the accessibility footer stacked directly under it (one column, so the
-    card-to-footer gap stays fixed regardless of window height) instead of
-    the footer being independently anchored to the window's bottom edge."""
+    the accessibility footer (see make_accessibility_footer) optionally
+    stacked directly under it - one column, so the card-to-footer gap
+    stays fixed regardless of window height, instead of the footer being
+    independently anchored to the window's bottom edge."""
     bg = Background(sharp=False)
     card = AppCard(content_widget, on_back, on_forward, forward_label)
     centering = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
@@ -173,6 +177,7 @@ def page_root(content_widget, on_back, on_forward, forward_label="Continue"):
     centering.set_hexpand(True)
     centering.set_vexpand(True)
     centering.append(card.widget)
-    centering.append(make_accessibility_footer())
+    if show_accessibility_footer:
+        centering.append(make_accessibility_footer())
     bg.add_overlay(centering)
     return bg, card

@@ -81,7 +81,8 @@ class CountryPage:
         content.append(self.select_list.widget)
 
         self.widget, self.card = page_root(
-            content, on_back=self._on_back, on_forward=self._on_continue, forward_label="Continue"
+            content, on_back=self._on_back, on_forward=self._on_continue, forward_label="Continue",
+            show_accessibility_footer=True,
         )
 
     def on_show(self):
