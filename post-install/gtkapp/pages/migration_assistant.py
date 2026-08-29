@@ -1,91 +1,97 @@
-"""Migration Assistant - visual only for now (per explicit instruction): two
-selectable source options, no actual transfer implemented yet."""
+"""Migration Assistant - matches macOS's real "Transfer Your Data to This
+Mac" screen: left-aligned icon+title+paragraph, then a labeled list of
+radio options below - not a centered icon-grid picker. Visual only for now
+(per explicit instruction): selectable source, no actual transfer
+implemented yet.
+
+Only 3 options instead of the reference's 4: pearOS has no phone/tablet
+device ecosystem for a "Set up with iPhone or iPad"-equivalent option to
+mean anything, so it's dropped rather than inventing a fictional pearOS
+device to fill the slot - the other three all map to something real."""
 import gi
 
 gi.require_version("Gtk", "4.0")
 from gi.repository import Gtk
 
-from ..widgets import page_root, make_title, make_description
+from ..widgets import page_root
+from .migration_icon import TransferIcon
+
+# Measured off a real macOS Setup Assistant screenshot of this exact page
+# (left column started at x=159 in a 723-wide card) and scaled to this
+# app's 800-wide card (factor 799/723 ~= 1.105).
+_LEFT_MARGIN = 176
 
 OPTIONS = [
-    ("pearos", "From a pearOS Machine or Backup",
-     "Transfer information from another pearOS computer, an external "
-     "drive, or a Time Machine-style backup."),
-    ("windows", "From a Windows PC",
-     "Transfer information from a Windows computer on the same network."),
-    ("setup_new", "Set Up as New",
-     "Don't transfer any information now - you can do this later from "
-     "System Settings."),
+    ("pearos", "From a pearOS Computer, Time Machine, or startup disk"),
+    ("windows", "From a Windows PC"),
+    ("new", "Set Up as New"),
 ]
-
-_ICON_NAMES = {
-    "pearos": "drive-harddisk-symbolic",
-    "windows": "computer-symbolic",
-    "setup_new": "document-new-symbolic",
-}
 
 
 class MigrationAssistantPage:
     def __init__(self, app):
         self.app = app
-        self._selected = None
+        self._selected = OPTIONS[0][0]
 
-        content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         content.set_hexpand(True)
-        content.set_vexpand(True)
-        content.set_valign(Gtk.Align.CENTER)
-        self.title = make_title("Migration Assistant")
+
+        icon = TransferIcon(size=92)
+        icon.set_halign(Gtk.Align.START)
+        icon.set_margin_start(_LEFT_MARGIN)
+        icon.set_margin_top(70)
+        content.append(icon)
+
+        self.title = Gtk.Label(label="Transfer Your Data to This pearOS Computer")
+        self.title.add_css_class("title")
+        self.title.set_halign(Gtk.Align.START)
+        self.title.set_margin_start(_LEFT_MARGIN)
+        self.title.set_margin_top(24)
         content.append(self.title)
-        self.description = make_description(
-            "If you have another computer, you can transfer your information to this one."
+
+        self.description = Gtk.Label(
+            label=(
+                "You can transfer your data from another pearOS computer or "
+                "a Windows PC. If you don't want to transfer from a "
+                "computer, you can use a backup or startup disk, or set up "
+                "this pearOS Computer without transferring any data."
+            )
         )
+        self.description.add_css_class("description")
+        self.description.set_wrap(True)
+        self.description.set_justify(Gtk.Justification.LEFT)
+        self.description.set_halign(Gtk.Align.START)
+        self.description.set_margin_start(_LEFT_MARGIN)
+        self.description.set_margin_top(8)
+        self.description.set_max_width_chars(48)
         content.append(self.description)
 
-        picker = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=18)
-        picker.set_halign(Gtk.Align.CENTER)
-        picker.set_margin_top(20)
-        content.append(picker)
+        self.question = Gtk.Label(label="How do you want to transfer your information?")
+        self.question.add_css_class("migration-question")
+        self.question.set_halign(Gtk.Align.START)
+        self.question.set_margin_start(_LEFT_MARGIN)
+        self.question.set_margin_top(72)
+        content.append(self.question)
 
-        self._option_boxes = {}
-        for key, label_text, desc_text in OPTIONS:
-            option = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
-            option.add_css_class("look-option")
-            option.set_size_request(200, 160)
+        radios = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        radios.set_halign(Gtk.Align.START)
+        radios.set_margin_start(_LEFT_MARGIN)
+        radios.set_margin_top(10)
+        content.append(radios)
 
-            icon = Gtk.Image.new_from_icon_name(_ICON_NAMES[key])
-            icon.set_pixel_size(48)
-            icon.set_margin_top(10)
-            option.append(icon)
-
-            label = Gtk.Label(label=label_text)
-            label.add_css_class("look-option-label")
-            label.set_wrap(True)
-            label.set_justify(Gtk.Justification.CENTER)
-            label.set_max_width_chars(20)
-            option.append(label)
-
-            desc = Gtk.Label(label=desc_text)
-            desc.add_css_class("description")
-            desc.set_wrap(True)
-            desc.set_justify(Gtk.Justification.CENTER)
-            desc.set_max_width_chars(22)
-            option.append(desc)
-
-            click = Gtk.GestureClick()
-            click.connect("released", self._on_option_clicked, key)
-            option.add_controller(click)
-
-            picker.append(option)
-            self._option_boxes[key] = option
-
-        note = Gtk.Label(
-            label="You can also transfer your information later from System Settings."
-        )
-        note.add_css_class("look-note")
-        note.set_wrap(True)
-        note.set_justify(Gtk.Justification.CENTER)
-        note.set_margin_top(16)
-        content.append(note)
+        first_button = None
+        self._buttons = {}
+        for key, label_text in OPTIONS:
+            btn = Gtk.CheckButton(label=label_text)
+            btn.add_css_class("migration-radio")
+            if first_button is None:
+                first_button = btn
+            else:
+                btn.set_group(first_button)
+            btn.connect("toggled", self._on_toggled, key)
+            radios.append(btn)
+            self._buttons[key] = btn
+        first_button.set_active(True)
 
         self.widget, self.card = page_root(
             content, on_back=self._on_back, on_forward=self._on_continue, forward_label="Continue"
@@ -94,13 +100,9 @@ class MigrationAssistantPage:
     def on_show(self):
         pass
 
-    def _on_option_clicked(self, _gesture, _n_press, _x, _y, key):
-        for k, box in self._option_boxes.items():
-            if k == key:
-                box.add_css_class("selected")
-            else:
-                box.remove_css_class("selected")
-        self._selected = key
+    def _on_toggled(self, btn, key):
+        if btn.get_active():
+            self._selected = key
 
     def _on_back(self):
         self.app.state.wifi_entry_forward = False

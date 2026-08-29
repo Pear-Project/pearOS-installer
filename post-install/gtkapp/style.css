@@ -79,6 +79,50 @@ window.dark-mode .profile-picture-heading {
   color: #9a9aa2;
 }
 
+/* ── migration_assistant.py's radio list ──────────────────────────────
+   Measured off the reference: label text ~13px, ~23px row-to-row spacing,
+   left-aligned starting flush with the icon/title/paragraph above it. */
+.migration-question {
+  font-family: "Sen";
+  font-size: 13px;
+  font-weight: bold;
+  color: #333333;
+}
+
+window.dark-mode .migration-question {
+  color: #f2f2f2;
+}
+
+.migration-radio {
+  font-family: "Sen";
+  font-size: 13px;
+  color: #333333;
+  min-height: 23px;
+}
+
+window.dark-mode .migration-radio {
+  color: #f2f2f2;
+}
+
+/* Grouped GtkCheckButtons use a "radio" sub-node (per GTK4 docs) - the
+   system theme paints its unselected state as a solid dark filled circle
+   via background-image (same failure mode fixed elsewhere in this file
+   for the nav-button/scrollbar/list-hover), nothing like macOS's plain
+   light-gray outline ring. */
+.migration-radio radio:not(:checked) {
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+  border: 2px solid #c6c6c6;
+  border-radius: 999px;
+  min-width: 16px;
+  min-height: 16px;
+}
+
+window.dark-mode .migration-radio radio:not(:checked) {
+  border-color: #55565c;
+}
+
 /* ── Lists (language / keymap / timezone) ─────────────────────────────
    Colors pulled from the real pearOS GTK4 theme
    (dpkg/pearos-settings/usr/share/themes/pearOS{,-dark}/gtk-4.0/gtk.css):
