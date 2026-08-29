@@ -21,6 +21,12 @@ def make_worldmap():
     box = Gtk.Box()
     box.set_halign(Gtk.Align.CENTER)
     box.set_margin_top(55)
+    # Measured off the reference screenshot: the globe glyph's center sits
+    # ~5% of the card's width left of true center (icon bbox center 325 vs
+    # card center 361.5 in a 723-wide reference card), not dead-centered -
+    # reproduced here via asymmetric margins so centering still shifts left
+    # by the same fraction on this card's width.
+    box.set_margin_end(80)
     box.append(icon)
     return box
 
