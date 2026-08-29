@@ -503,14 +503,24 @@ window.dark-mode .accessibility-card-label {
 .license textview {
   color: #808080;
   font-size: 13px;
+  background-color: #ffffff;
 }
 
 window.dark-mode .license textview {
   color: #b0b0b8;
+  background-color: #242424;
 }
 
 .license textview text {
   background-color: transparent;
+}
+
+.license {
+  background-color: #ffffff;
+}
+
+window.dark-mode .license {
+  background-color: #242424;
 }
 
 /* ── Timezone UTC checkbox row ────────────────────────────────────── */
