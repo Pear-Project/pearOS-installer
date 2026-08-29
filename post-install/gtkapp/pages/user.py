@@ -28,7 +28,13 @@ from ..widgets import page_root
 # layouts (migration_assistant.py etc) and country.py's list width.
 _LEFT_MARGIN = 176
 _FIELD_WIDTH = 453
-_AVATAR_SIZE = 56
+# Re-measured against a second, higher-resolution reference screenshot of
+# this exact page using color-based bounding-box detection (not eyeballed
+# crops, which had been misleading): avatar diameter measured at 6.7% of
+# card width there vs this page's original 7.4%, and the title's own top
+# margin at 20.5% of card height there vs 11.7% here - both corrected
+# below by that same measured ratio.
+_AVATAR_SIZE = 51
 
 
 class UserPage:
@@ -42,7 +48,7 @@ class UserPage:
         self.title.add_css_class("title")
         self.title.set_halign(Gtk.Align.START)
         self.title.set_margin_start(_LEFT_MARGIN)
-        self.title.set_margin_top(70)
+        self.title.set_margin_top(123)
         content.append(self.title)
 
         self.description = Gtk.Label(
