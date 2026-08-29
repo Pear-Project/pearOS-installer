@@ -31,7 +31,7 @@ OPTIONS = [
 class MigrationAssistantPage:
     def __init__(self, app):
         self.app = app
-        self._selected = OPTIONS[0][0]
+        self._selected = "new"
 
         content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         content.set_hexpand(True)
@@ -79,6 +79,11 @@ class MigrationAssistantPage:
         radios.set_margin_top(10)
         content.append(radios)
 
+        # No actual transfer is implemented yet (see module docstring) - the
+        # pearOS/Windows sources are shown (matching the reference's full
+        # option list) but disabled rather than offering a choice that
+        # silently does nothing, with "Set Up as New" as the only enabled,
+        # pre-selected option.
         first_button = None
         self._buttons = {}
         for key, label_text in OPTIONS:
@@ -88,10 +93,13 @@ class MigrationAssistantPage:
                 first_button = btn
             else:
                 btn.set_group(first_button)
+            if key != "new":
+                btn.set_sensitive(False)
             btn.connect("toggled", self._on_toggled, key)
             radios.append(btn)
             self._buttons[key] = btn
-        first_button.set_active(True)
+        self._selected = "new"
+        self._buttons["new"].set_active(True)
 
         self.widget, self.card = page_root(
             content, on_back=self._on_back, on_forward=self._on_continue, forward_label="Continue"
