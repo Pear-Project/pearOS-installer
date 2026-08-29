@@ -72,6 +72,13 @@ class UserPage:
         self.pictures_scroller.set_min_content_width(_FIELD_WIDTH)
         self.pictures_scroller.set_max_content_width(_FIELD_WIDTH)
         self.pictures_scroller.set_min_content_height(_AVATAR_SIZE + 12)
+        # Belt-and-suspenders, same as common.py's SelectList: min/max-
+        # content-width alone was silently ignored here too - with several
+        # avatars loaded, this scroller's natural width propagated all the
+        # way up and grew the whole 800px-wide card to 858px, throwing off
+        # every measured margin/width on the page. set_size_request is a
+        # hard floor GTK always honors regardless of what's driving that.
+        self.pictures_scroller.set_size_request(_FIELD_WIDTH, _AVATAR_SIZE + 12)
         self.pictures_scroller.set_halign(Gtk.Align.START)
         self.pictures_scroller.set_margin_start(_LEFT_MARGIN)
         self.pictures_scroller.set_margin_top(26)
@@ -113,11 +120,19 @@ class UserPage:
         half_width = (_FIELD_WIDTH - 15) // 2
         self.password = Gtk.PasswordEntry(placeholder_text="Password", show_peek_icon=True)
         self.password.add_css_class("textbox")
+        # .textbox alone carries a 300px min-width (fine for the full-width
+        # fields above) which silently overrode the half_width size_request
+        # below - CSS min-width can't be shrunk by a smaller size_request,
+        # only raised - and blew this row (and the whole card with it) out
+        # to 858px instead of 800px. .textbox-half brings that floor down
+        # to something size_request can actually still raise as intended.
+        self.password.add_css_class("textbox-half")
         self.password.set_size_request(half_width, -1)
         self.password_confirm = Gtk.PasswordEntry(
             placeholder_text="Verify Password", show_peek_icon=True
         )
         self.password_confirm.add_css_class("textbox")
+        self.password_confirm.add_css_class("textbox-half")
         self.password_confirm.set_size_request(half_width, -1)
         password_row.append(self.password)
         password_row.append(self.password_confirm)
