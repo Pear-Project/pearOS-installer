@@ -379,29 +379,6 @@ window.dark-mode .textbox text placeholder {
   box-shadow: 0 0 0 3px rgba(87, 162, 255, 0.1);
 }
 
-/* user.py's "Create a Computer Account" form uses plain underlined fields
-   in the real macOS screen (measured off a reference screenshot), not the
-   pill-boxed style .textbox is elsewhere (pearid.py's sign-in) - applied
-   as a second class alongside .textbox so the placeholder-color/caret
-   rules above still apply, only the box decoration itself changes here. */
-.textbox-underline {
-  border: none;
-  border-bottom: 1px solid #d5d5d5;
-  border-radius: 0;
-  background-color: transparent;
-  padding: 6px 2px;
-}
-
-.textbox-underline:focus {
-  border-bottom-color: #57a2ff;
-  box-shadow: none;
-}
-
-window.dark-mode .textbox-underline {
-  border-bottom-color: #46464c;
-  background-color: transparent;
-}
-
 window.dark-mode .textbox {
   background-color: #2a2b31;
   border-color: #3d3e46;

@@ -1,8 +1,10 @@
 """Port of templates/user.html + the user-related parts of engine.js
 (validateUser, saveUser, check_passwords_match, checkFormValidity,
 load_profile_pictures) - matches macOS's real "Create a Mac Account"
-layout: left-aligned title/paragraph, avatar row, then plain underlined
-fields (not the pill-boxed .textbox style pearid.py's sign-in uses) -
+layout: left-aligned title/paragraph, avatar row, then the same
+pill-shaped .textbox fields pearid.py's sign-in uses (a closer screenshot
+showed a focused field with a clear rounded-pill border and blue focus
+ring, not the plain underline an earlier, blurrier one looked like) -
 measured off a real screenshot of this exact page. No "Allow computer
 account password to be reset with your Apple Account" checkbox: there's
 no PearID-linked local-password-reset feature behind it to offer.
@@ -86,7 +88,6 @@ class UserPage:
         def _field(placeholder):
             entry = Gtk.Entry(placeholder_text=placeholder)
             entry.add_css_class("textbox")
-            entry.add_css_class("textbox-underline")
             entry.set_size_request(_FIELD_WIDTH, -1)
             return entry
 
@@ -116,13 +117,11 @@ class UserPage:
         half_width = (_FIELD_WIDTH - 15) // 2
         self.password = Gtk.PasswordEntry(placeholder_text="Password", show_peek_icon=True)
         self.password.add_css_class("textbox")
-        self.password.add_css_class("textbox-underline")
         self.password.set_size_request(half_width, -1)
         self.password_confirm = Gtk.PasswordEntry(
             placeholder_text="Verify Password", show_peek_icon=True
         )
         self.password_confirm.add_css_class("textbox")
-        self.password_confirm.add_css_class("textbox-underline")
         self.password_confirm.set_size_request(half_width, -1)
         password_row.append(self.password)
         password_row.append(self.password_confirm)
