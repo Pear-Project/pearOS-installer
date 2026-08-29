@@ -3,7 +3,21 @@ which all reproduce the same `.list` <select size=9> markup."""
 import gi
 
 gi.require_version("Gtk", "4.0")
-from gi.repository import Gtk
+gi.require_version("Pango", "1.0")
+from gi.repository import Gtk, Pango
+
+# Sentinel used as the "value" of a separator entry in a SelectList's items
+# (e.g. country.py's suggested-countries-then-divider-then-everything-else
+# layout) - rendered as a plain rule, not selectable/activatable, and
+# skipped by selected_value()/selected_text() the same way any other
+# non-selected index would be.
+SEPARATOR = object()
+
+def _selected_attrs():
+    attrs = Pango.AttrList.new()
+    attrs.insert(Pango.attr_foreground_new(0xFFFF, 0xFFFF, 0xFFFF))
+    attrs.insert(Pango.attr_weight_new(Pango.Weight.BOLD))
+    return attrs
 
 
 def make_worldmap():
@@ -44,7 +58,25 @@ def _make_row(text):
     label.set_margin_top(0)
     label.set_margin_bottom(0)
     row.set_child(label)
+    row._label = label  # noqa: SLF001 - read back in SelectList's selection handler
     return row
+
+
+def _make_separator_row():
+    row = Gtk.ListBoxRow()
+    row.set_activatable(False)
+    row.set_selectable(False)
+    row.set_focusable(False)
+    separator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
+    separator.set_margin_top(4)
+    separator.set_margin_bottom(4)
+    row.set_child(separator)
+    row._label = None  # noqa: SLF001
+    return row
+
+
+def _row_for(value, text):
+    return _make_separator_row() if value is SEPARATOR else _make_row(text)
 
 
 class SelectList:
@@ -55,10 +87,12 @@ class SelectList:
     def __init__(self, items):
         """items: list of (value, display_text)."""
         self.items = list(items)
+        self._selected_label = None
         self.listbox = Gtk.ListBox()
         self.listbox.set_selection_mode(Gtk.SelectionMode.SINGLE)
-        for _value, text in self.items:
-            self.listbox.append(_make_row(text))
+        self.listbox.connect("row-selected", self._on_row_selected)
+        for value, text in self.items:
+            self.listbox.append(_row_for(value, text))
 
         scroller = Gtk.ScrolledWindow()
         # The framed-box border/radius/background belongs on the scroller
@@ -97,14 +131,31 @@ class SelectList:
         scroller.set_margin_top(50)
         self.widget = scroller
 
+    def _on_row_selected(self, _listbox, row):
+        # CSS alone (`row:selected { color: ... }`, even re-declared on the
+        # child `label` directly) measurably did not reach the label's
+        # rendered text on this system's theme - background-color from the
+        # very same rule did apply (confirmed by exact-matching sampled
+        # pixels), only color didn't, for reasons that didn't resolve after
+        # several targeted CSS overrides. Pango attributes on the label
+        # itself bypass that entirely and are guaranteed to render.
+        if self._selected_label is not None:
+            self._selected_label.set_attributes(Pango.AttrList.new())
+            self._selected_label = None
+        label = getattr(row, "_label", None) if row is not None else None
+        if label is not None:
+            label.set_attributes(_selected_attrs())
+            self._selected_label = label
+
     def set_items(self, items):
         self.items = list(items)
         child = self.listbox.get_row_at_index(0)
         while child is not None:
             self.listbox.remove(child)
             child = self.listbox.get_row_at_index(0)
-        for _value, text in self.items:
-            self.listbox.append(_make_row(text))
+        self._selected_label = None
+        for value, text in self.items:
+            self.listbox.append(_row_for(value, text))
         # Rebuilding the row set (country.py's IP-suggestion reorder is the
         # only caller) can leave stale paint behind under VirtualBox's
         # software renderer, which doesn't always repaint the old rows'

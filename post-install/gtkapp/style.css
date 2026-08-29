@@ -149,6 +149,14 @@ window.dark-mode .wizard-list row:hover {
   font-weight: bold;
 }
 
+/* color is inheritable, so row:selected's color should reach the child
+   label automatically - it measurably wasn't (text stayed dark), so the
+   label itself gets a direct, higher-specificity override too rather than
+   relying on inheritance working as expected. */
+.wizard-list row:selected label {
+  color: #ffffff;
+}
+
 /* macOS's scrollbar here is a thin floating gray pill with no visible
    track, inset a few px from the list's own border - not GTK's default
    thick dark bar+trough. Measured off the reference: ~9px wide thumb,
@@ -157,7 +165,13 @@ window.dark-mode .wizard-list row:hover {
   background: none;
   background-image: none;
   border: none;
-  margin: 3px;
+  margin: 0;
+  /* The theme reserves a wider default gutter than we want for the whole
+     scrollbar (slider was rendering ~17px wide even with the slider's own
+     min-width set to 9px - a slider fills its trough's allocated width,
+     and the trough was filling this node's, so shrinking had to happen
+     here, at the top, not just on the descendant nodes). */
+  min-width: 15px;
 }
 
 .wizard-list scrollbar trough {
@@ -165,7 +179,9 @@ window.dark-mode .wizard-list row:hover {
   background-image: none;
   border: none;
   box-shadow: none;
-  min-width: 9px;
+  padding: 0;
+  margin: 0 3px;
+  min-width: 0;
 }
 
 .wizard-list scrollbar slider {
@@ -173,6 +189,8 @@ window.dark-mode .wizard-list row:hover {
   background-image: none;
   box-shadow: none;
   border: none;
+  padding: 0;
+  margin: 0;
   border-radius: 999px;
   min-width: 9px;
   min-height: 20px;

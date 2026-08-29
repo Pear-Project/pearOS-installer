@@ -14,7 +14,7 @@ from gi.repository import Gtk, GLib
 
 from .. import network_backend as netbackend
 from ..widgets import page_root, make_title
-from .common import SelectList, make_worldmap
+from .common import SEPARATOR, SelectList, make_worldmap
 
 # Only needs entries for the locales this app actually ships translations
 # for (see i18n's I18N_DIR) - a country.py-spelling lookup for the second,
@@ -105,14 +105,20 @@ class CountryPage:
         return _LOCALE_REGION_TO_COUNTRY.get(region)
 
     def _apply_suggestions(self, ip_guess):
+        # Locale guess first (e.g. "United States" for an en_US install),
+        # then the IP-geolocated one, then a divider before the full
+        # alphabetical list - matching order requested over IP-guess-first.
         top = []
-        for candidate in (ip_guess, self._locale_guess()):
+        for candidate in (self._locale_guess(), ip_guess):
             if candidate in COUNTRIES and candidate not in top:
                 top.append(candidate)
         if not top:
             return False
         rest = [c for c in COUNTRIES if c not in top]
-        self.select_list.set_items([(c, c) for c in top + rest])
+        items = [(c, c) for c in top]
+        items.append((SEPARATOR, None))
+        items.extend((c, c) for c in rest)
+        self.select_list.set_items(items)
         self.select_list.select_value(top[0])
         return False
 
