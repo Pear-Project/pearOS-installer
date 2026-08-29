@@ -27,7 +27,7 @@ def list_fingerprints(username=None):
         )
     except (OSError, subprocess.TimeoutExpired):
         return []
-    fingers = re.findall(r"finger:\s+(\S+)", result.stdout)
+    fingers = re.findall(r"-\s*#\d+:\s*(\S+)", result.stdout)
     return [{"finger": f, "label": f.replace("-", " ")} for f in fingers]
 
 
