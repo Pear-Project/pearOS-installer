@@ -102,15 +102,11 @@ class UserPage:
         self.account_hint.set_halign(Gtk.Align.START)
         form.append(self.account_hint)
 
-        self.hostname = _field("Hostname")
-        self.hostname.set_text("pearOS-machine")
-        self.hostname.set_margin_top(8)
-        form.append(self.hostname)
-
-        self.hostname_hint = Gtk.Label(label="This will be your computer's network name")
-        self.hostname_hint.add_css_class("account-name-hint")
-        self.hostname_hint.set_halign(Gtk.Align.START)
-        form.append(self.hostname_hint)
+        # Kept alive (pre-filled, just never added to the visible form) for
+        # save_user() below, which still needs a hostname - not shown per
+        # explicit instruction, since it's always this fixed default and
+        # there's no real reason for a user to want to change it here.
+        self.hostname = Gtk.Entry(text="pearOS-machine")
 
         password_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=15)
         password_row.set_margin_top(8)
@@ -158,10 +154,6 @@ class UserPage:
         )
         self.account_hint.set_label(
             self.app.t("user.accountNameHint", "This will be the name of your home folder")
-        )
-        self.hostname.set_placeholder_text(self.app.t("user.hostnamePlaceholder", "Hostname"))
-        self.hostname_hint.set_label(
-            self.app.t("user.hostnameHint", "This will be your computer's network name")
         )
         self.password.set_property(
             "placeholder-text", self.app.t("user.passwordPlaceholder", "Password")
