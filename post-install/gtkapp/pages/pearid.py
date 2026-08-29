@@ -97,7 +97,7 @@ class PearIDPage:
         note_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         note_row.set_halign(Gtk.Align.START)
         note_row.set_margin_start(_LEFT_MARGIN)
-        note_row.set_margin_top(48)
+        note_row.set_margin_top(153)
         note_icon = TwoPersonIcon(size=24)
         note_icon.set_valign(Gtk.Align.START)
         note_icon.set_margin_top(2)
