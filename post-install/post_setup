@@ -177,8 +177,15 @@ else
   fi
 fi
 
-# Passing custom locale to locale file
+# Passing custom locale to locale file. The base image ships /etc/locale.gen
+# with a large default set of locales already uncommented, and locale-gen
+# (below) regenerates everything left uncommented - comment it all out first
+# so only en_US.UTF-8 (baseline) and the chosen locale actually get built.
 echo "Configuring locale: $LOCALE..."
+sed -i '/^[a-zA-Z]/s/^/#/' /etc/locale.gen
+if ! sed -i "s/#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/" /etc/locale.gen; then
+  error_exit "Failed to configure locale in /etc/locale.gen"
+fi
 if [ "$LOCALE" != "en_US.UTF-8" ]; then
   if ! sed -i "s/#$LOCALE/$LOCALE/" /etc/locale.gen; then
     error_exit "Failed to configure locale in /etc/locale.gen"

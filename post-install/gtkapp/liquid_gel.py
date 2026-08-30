@@ -275,6 +275,18 @@ class LiquidGelText(Gtk.Widget):
     def start(self):
         self._start_us = None
         self.add_tick_callback(self._tick)
+        GLib.timeout_add(1500, self._shader_watchdog)
+
+    def _shader_watchdog(self):
+        # _ensure_shader() only delivers a result once the widget's native
+        # surface exists (native is None -> bails out silently, retried next
+        # frame) - on at least one real VM (VirtualBox, Wayland guest) that
+        # never resolves at all, leaving do_snapshot() perpetually blank with
+        # no fallback ever triggered. Force one after a grace period so the
+        # page always ends up showing *something*.
+        if self._shader_ok is None:
+            self._deliver_shader_result(False)
+        return False
 
     def _tick(self, widget, frame_clock):
         now = frame_clock.get_frame_time()

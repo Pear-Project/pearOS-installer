@@ -6,6 +6,8 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Pango", "1.0")
 from gi.repository import Gtk, Pango
 
+from .globe_grid_icon import GlobeGridIcon
+
 # Sentinel used as the "value" of a separator entry in a SelectList's items
 # (e.g. country.py's suggested-countries-then-divider-then-everything-else
 # layout) - rendered as a plain rule, not selectable/activatable, and
@@ -21,16 +23,12 @@ def _selected_attrs():
 
 
 def make_worldmap():
-    # macOS's own "Select Your Country or Region" glyph is a circle outline
-    # with continent silhouettes inside - "globe-symbolic" (shipped by the
-    # breeze icon theme this OS already depends on) is the closest match
-    # available without commissioning new vector art: same circle+continents
-    # composition, unlike the flat 2-tone raster globe this used to be.
-    # Symbolic icons render in whatever color is set on them, so the blue
-    # tint comes from the "globe-icon" CSS class, not the icon data itself.
-    icon = Gtk.Image.new_from_icon_name("globe-symbolic")
-    icon.set_pixel_size(76)
-    icon.add_css_class("globe-icon")
+    # "globe-symbolic" isn't guaranteed to exist in every icon theme this
+    # runs under (showed up as the broken-image "?" glyph on a real test
+    # install) - drawn directly instead, same GlobeGridIcon written_spoken.py
+    # already uses, and the same reasoning as every other custom icon in
+    # this package (migration_icon.py etc).
+    icon = GlobeGridIcon(size=76)
 
     box = Gtk.Box()
     box.set_halign(Gtk.Align.CENTER)
