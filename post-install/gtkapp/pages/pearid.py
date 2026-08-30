@@ -130,9 +130,9 @@ class PearIDPage:
 
         self.later_btn = Gtk.Button(label="Set Up Later")
         self.later_btn.add_css_class("nav-button")
-        self.later_btn.set_halign(Gtk.Align.START)
+        self.later_btn.set_halign(Gtk.Align.END)
         self.later_btn.set_valign(Gtk.Align.END)
-        self.later_btn.set_margin_start(20)
+        self.later_btn.set_margin_end(145)
         self.later_btn.set_margin_bottom(20)
         self.later_btn.connect("clicked", lambda b: self.app.go_to("user"))
         self.card.overlay.add_overlay(self.later_btn)
