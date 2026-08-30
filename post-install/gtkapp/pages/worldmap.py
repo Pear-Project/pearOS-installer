@@ -1,23 +1,25 @@
-"""Selectable world map for the timezone page - a stylized (not
-geographically precise) equirectangular continent silhouette with one dot
-per entry in state.COMMON_TIMEZONES, clickable, kept in sync with the
-SelectList next to it. Matches Calamares' own timezone page layout (map +
-list together), just without KPMcore's SVG map data, which lives in a
-package this app doesn't depend on - the continents below are a hand-drawn
-approximation, good enough to recognize at a glance and to click into the
-right region; the actual timezone precision comes from the dot coordinates
-and the list, not the coastlines.
+"""Selectable world map for the timezone page - real country-boundary
+polygons (simplified from a public world.geo.json dataset, see
+world_polygons.json) with one dot per entry in state.COMMON_TIMEZONES,
+clickable, kept in sync with the SelectList next to it.
 
 Projection: plain equirectangular (x = lon, y = -lat), which is exactly
 what the (lon, lat) polygons and TIMEZONE_COORDS below are already in, so
 mapping to widget pixels is one shared linear scale for both."""
+import json
+import os
+
 import gi
 
 gi.require_version("Gtk", "4.0")
 from gi.repository import Gdk, Gtk
 
-MAP_WIDTH = 440
-MAP_HEIGHT = 220
+MAP_WIDTH = 480
+MAP_HEIGHT = 240
+
+_POLYGONS_PATH = os.path.join(os.path.dirname(__file__), "world_polygons.json")
+with open(_POLYGONS_PATH) as _f:
+    _CONTINENTS = json.load(_f)
 
 # One representative (lat, lon) per COMMON_TIMEZONES entry (state.py) -
 # the zone's principal city, close enough for a click-to-pick map.
@@ -74,59 +76,7 @@ TIMEZONE_COORDS = {
     "Pacific/Honolulu": (21.3, -157.9),
 }
 
-# Rough, simplified continent silhouettes as (lon, lat) point lists - not
-# real coastline data, just enough shape to be recognizable at map scale.
-_CONTINENTS = [
-    # North America
-    [
-        (-165, 68), (-140, 70), (-125, 55), (-125, 48), (-124, 40),
-        (-117, 32), (-105, 20), (-97, 18), (-90, 16), (-86, 13),
-        (-83, 9), (-80, 9), (-81, 22), (-81, 31), (-75, 35), (-70, 41),
-        (-67, 45), (-60, 50), (-65, 60), (-80, 62), (-90, 68),
-        (-110, 72), (-130, 70), (-165, 68),
-    ],
-    # South America
-    [
-        (-80, 10), (-77, 5), (-70, -5), (-70, -18), (-72, -30),
-        (-70, -40), (-68, -52), (-65, -55), (-58, -52), (-53, -35),
-        (-48, -25), (-40, -10), (-35, -5), (-45, 0), (-50, 5),
-        (-60, 8), (-70, 10), (-80, 10),
-    ],
-    # Europe
-    [
-        (-10, 36), (-9, 43), (0, 49), (5, 51), (10, 54), (15, 55),
-        (20, 54), (25, 60), (30, 60), (38, 66), (30, 70), (20, 70),
-        (10, 63), (5, 58), (-2, 58), (-8, 50), (-10, 43), (-10, 36),
-    ],
-    # Africa
-    [
-        (-17, 15), (-16, 12), (-13, 7), (-10, 5), (-5, 5), (0, 6),
-        (9, 4), (9, -3), (12, -6), (13, -10), (15, -17), (18, -25),
-        (20, -30), (25, -34), (30, -30), (33, -25), (35, -20),
-        (40, -15), (42, -5), (48, 0), (45, 10), (43, 12), (40, 15),
-        (38, 18), (35, 25), (33, 31), (25, 32), (15, 32), (10, 30),
-        (0, 20), (-10, 20), (-17, 15),
-    ],
-    # Asia (incl. Middle East, Russia, India, SE Asia)
-    [
-        (28, 40), (29, 45), (40, 45), (48, 42), (50, 45), (60, 55),
-        (55, 60), (45, 55), (35, 55), (30, 58), (30, 70), (60, 70),
-        (90, 75), (140, 75), (170, 68), (180, 66), (170, 60),
-        (160, 55), (140, 45), (130, 42), (122, 30), (120, 23),
-        (110, 18), (105, 10), (100, 5), (95, 5), (90, 15), (88, 22),
-        (80, 8), (77, 8), (72, 20), (68, 24), (61, 25), (50, 25),
-        (48, 30), (40, 37), (35, 37), (28, 40),
-    ],
-    # Australia
-    [
-        (113, -22), (114, -33), (118, -35), (130, -32), (137, -35),
-        (140, -38), (147, -38), (150, -37), (153, -28), (150, -22),
-        (145, -16), (142, -11), (135, -12), (130, -14), (126, -14),
-        (122, -18), (113, -22),
-    ],
-]
-
-_HIT_RADIUS = 14  # px, generous click target around each small dot
+_HIT_RADIUS = 14
 
 
 class WorldMapWidget(Gtk.DrawingArea):
@@ -198,15 +148,6 @@ class WorldMapWidget(Gtk.DrawingArea):
         scale_x = width / MAP_WIDTH
         scale_y = height / MAP_HEIGHT
 
-        # Ocean background - a soft rounded panel, not flat-transparent, so
-        # the map reads as its own element against the card behind it.
-        cr.save()
-        cr.set_source_rgba(0.35, 0.55, 0.75, 0.10)
-        cr.rectangle(0, 0, width, height)
-        cr.fill()
-        cr.restore()
-
-        cr.set_line_width(1.0)
         for poly in _CONTINENTS:
             cr.new_path()
             for i, (lon, lat) in enumerate(poly):
@@ -217,26 +158,21 @@ class WorldMapWidget(Gtk.DrawingArea):
                 else:
                     cr.line_to(x, y)
             cr.close_path()
-            cr.set_source_rgba(0.55, 0.62, 0.72, 0.45)
-            cr.fill_preserve()
-            cr.set_source_rgba(0.75, 0.80, 0.88, 0.55)
-            cr.stroke()
+            cr.set_source_rgb(0.78, 0.78, 0.78)
+            cr.fill()
+
+        if self._selected is not None and self._selected in TIMEZONE_COORDS:
+            lat, lon = TIMEZONE_COORDS[self._selected]
+            x, y = self._project(lon, lat)
+            x, y = x * scale_x, y * scale_y
+            cr.set_source_rgb(0.03, 0.52, 1.0)
+            cr.arc(x, y, 3.5, 0, 6.2832)
+            cr.fill()
 
         for tz, (lat, lon) in TIMEZONE_COORDS.items():
             x, y = self._project(lon, lat)
             x, y = x * scale_x, y * scale_y
-            if tz == self._selected:
-                cr.set_source_rgba(0.03, 0.52, 1.0, 0.25)
-                cr.arc(x, y, 8, 0, 6.2832)
-                cr.fill()
-                cr.set_source_rgb(0.03, 0.52, 1.0)
-                cr.arc(x, y, 4, 0, 6.2832)
-                cr.fill()
-            elif tz == self._hover:
-                cr.set_source_rgba(1.0, 1.0, 1.0, 0.9)
-                cr.arc(x, y, 3.2, 0, 6.2832)
-                cr.fill()
-            else:
-                cr.set_source_rgba(1.0, 1.0, 1.0, 0.55)
-                cr.arc(x, y, 2.2, 0, 6.2832)
+            if tz == self._hover and tz != self._selected:
+                cr.set_source_rgba(0.03, 0.52, 1.0, 0.5)
+                cr.arc(x, y, 3.0, 0, 6.2832)
                 cr.fill()

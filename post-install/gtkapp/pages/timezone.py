@@ -1,13 +1,31 @@
-"""Port of templates/timezone.html."""
+"""Select Your Time Zone - matches macOS's real layout: centered title and
+instructions, a "set automatically" checkbox, the clickable world map, and
+a Time Zone/Closest City info block below it (a dropdown, not the list
+this used to show) - measured off a real screenshot of this exact page."""
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
 import gi
 
 gi.require_version("Gtk", "4.0")
 from gi.repository import Gtk
 
 from .. import state as state_mod
-from ..widgets import page_root, make_title
-from .common import SelectList
+from ..widgets import page_root
 from .worldmap import WorldMapWidget
+
+
+def _city_label(tz):
+    return tz.split("/")[-1].replace("_", " ")
+
+
+def _tz_display(tz):
+    try:
+        offset = datetime.now(ZoneInfo(tz)).strftime("%z")
+        sign = offset[0]
+        return f"{_city_label(tz)} Time (UTC{sign}{offset[1:3]}:{offset[3:]})"
+    except Exception:
+        return tz
 
 
 class TimezonePage:
@@ -16,61 +34,106 @@ class TimezonePage:
 
         content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         content.set_hexpand(True)
-        self.title = make_title("Select Your Time Zone")
+
+        self.title = Gtk.Label(label="Select Your Time Zone")
+        self.title.add_css_class("title")
+        self.title.set_halign(Gtk.Align.START)
+        self.title.set_margin_start(176)
+        self.title.set_margin_top(40)
         content.append(self.title)
 
+        self.description = Gtk.Label(
+            label=(
+                "To select a time zone, click the map near your location and "
+                "choose a city from the Closest City menu.\nYou can also have "
+                "the time zone change automatically, if possible, based on "
+                "your current location."
+            )
+        )
+        self.description.add_css_class("description")
+        self.description.set_wrap(True)
+        self.description.set_justify(Gtk.Justification.CENTER)
+        self.description.set_halign(Gtk.Align.CENTER)
+        self.description.set_margin_top(16)
+        self.description.set_max_width_chars(72)
+        content.append(self.description)
+
+        self.auto_check = Gtk.CheckButton(label="Set time zone automatically using current location")
+        self.auto_check.set_halign(Gtk.Align.CENTER)
+        self.auto_check.set_margin_top(14)
+        self.auto_check.connect("toggled", self._on_auto_toggled)
+        content.append(self.auto_check)
+
         self.map = WorldMapWidget(on_pick=self._on_map_pick)
+        self.map.set_margin_top(20)
         content.append(self.map)
 
-        items = [(tz, tz) for tz in state_mod.COMMON_TIMEZONES]
-        self.select_list = SelectList(items)
-        self.select_list.listbox.connect("row-selected", self._on_list_row_selected)
-        content.append(self.select_list.widget)
+        info = Gtk.Grid()
+        info.set_halign(Gtk.Align.CENTER)
+        info.set_margin_top(16)
+        info.set_row_spacing(6)
+        info.set_column_spacing(10)
 
-        utc_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-        utc_box.add_css_class("utc-toggle")
-        utc_box.set_halign(Gtk.Align.CENTER)
-        utc_box.set_margin_top(10)
-        self.utc_check = Gtk.CheckButton()
-        self.utc_label = Gtk.Label(
-            label="Hardware clock is set to UTC (recommended unless dual-booting Windows)"
+        tz_label = Gtk.Label(label="Time Zone:")
+        tz_label.add_css_class("account-name-hint")
+        tz_label.set_halign(Gtk.Align.END)
+        info.attach(tz_label, 0, 0, 1, 1)
+        self.tz_value = Gtk.Label(label="")
+        self.tz_value.add_css_class("description")
+        self.tz_value.set_halign(Gtk.Align.START)
+        info.attach(self.tz_value, 1, 0, 1, 1)
+
+        city_label = Gtk.Label(label="Closest City:")
+        city_label.add_css_class("account-name-hint")
+        city_label.set_halign(Gtk.Align.END)
+        info.attach(city_label, 0, 1, 1, 1)
+
+        self._tz_list = list(state_mod.COMMON_TIMEZONES)
+        self.city_dropdown = Gtk.DropDown.new_from_strings(
+            [_city_label(tz) for tz in self._tz_list]
         )
-        self.utc_label.set_wrap(True)
-        self.utc_label.set_max_width_chars(50)
-        utc_box.append(self.utc_check)
-        utc_box.append(self.utc_label)
-        content.append(utc_box)
+        self.city_dropdown.add_css_class("timezone-dropdown")
+        self.city_dropdown.set_halign(Gtk.Align.START)
+        self.city_dropdown.connect("notify::selected", self._on_dropdown_changed)
+        info.attach(self.city_dropdown, 1, 1, 1, 1)
+        content.append(info)
 
         self.widget, self.card = page_root(
             content, on_back=self._on_back, on_forward=self._on_continue, forward_label="Continue"
         )
 
-    def _on_map_pick(self, tz):
-        self.select_list.select_value(tz)
+    def _select_tz(self, tz, from_dropdown=False, from_map=False):
+        self.tz_value.set_label(_tz_display(tz))
+        self.map.set_selected(tz)
+        if not from_dropdown and tz in self._tz_list:
+            self.city_dropdown.set_selected(self._tz_list.index(tz))
+        if not from_map:
+            pass
 
-    def _on_list_row_selected(self, _listbox, _row):
-        self.map.set_selected(self.select_list.selected_value())
+    def _on_map_pick(self, tz):
+        self._select_tz(tz, from_map=True)
+
+    def _on_dropdown_changed(self, dropdown, _pspec):
+        idx = dropdown.get_selected()
+        if 0 <= idx < len(self._tz_list):
+            self._select_tz(self._tz_list[idx], from_dropdown=True)
+
+    def _on_auto_toggled(self, check):
+        auto = check.get_active()
+        self.map.set_sensitive(not auto)
+        self.city_dropdown.set_sensitive(not auto)
 
     def on_show(self):
-        if self.app.state.timezone:
-            self.select_list.select_value(self.app.state.timezone)
-        self.title.set_label(self.app.t("timezone.title", "Select Your Time Zone"))
-        self.card.forward_button.set_label(self.app.t("timezone.continue", "Continue"))
-        self.utc_label.set_label(
-            self.app.t(
-                "timezone.utcLabel",
-                "Hardware clock is set to UTC (recommended unless dual-booting Windows)",
-            )
-        )
-        windows_detected = self.app.state.detect_windows_dual_boot()
-        self.utc_check.set_active(not windows_detected)
+        tz = self.app.state.timezone or self._tz_list[0]
+        self._select_tz(tz)
 
     def _on_back(self):
         self.app.go_to("location_services")
 
     def _on_continue(self):
-        tz = self.select_list.selected_value()
-        err = self.app.state.save_timezone(tz, self.utc_check.get_active())
+        tz = self._tz_list[self.city_dropdown.get_selected()]
+        windows_detected = self.app.state.detect_windows_dual_boot()
+        err = self.app.state.save_timezone(tz, not windows_detected)
         if err:
             self.app.show_alert(err)
             return
