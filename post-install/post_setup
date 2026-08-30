@@ -85,30 +85,39 @@ rm -rf /etc/skel/.config/autostart/xyz.pearos-post-install.desktop
 # ever locking the device down, leaving every shipped device permanently
 # unauthenticated root on every boot.
 
-echo "Creating user $USER_NAME..."
-if ! useradd -m -G sudo -s /bin/bash -c "$FULL_NAME" "$USER_NAME"; then
-  error_exit "Failed to create user: $USER_NAME"
-fi
-
-echo "User $USER_NAME created successfully with sudo access"
-
 set +x
-if ! chpasswd <<<"$USER_NAME:$user_passwd"; then
+if ! chpasswd <<<"default:$user_passwd"; then
   set -x
   error_exit "Failed to set password for $USER_NAME"
 fi
 set -x
 
-# Remove 'default' user on next boot via a systemd oneshot service.
-# Must run BEFORE sddm.service so the user never appears on the login screen.
-# We cannot delete the user directly here because the Electron post-install
-# app runs as 'default', keeping active processes and open file handles in
-# /home/default — userdel would fail with "cannot remove user default".
-echo "Scheduling removal of default user on next boot..."
+echo "Scheduling finalization of $USER_NAME (rename from default) on next boot..."
 if id "default" &>/dev/null; then
-  cat > /etc/systemd/system/pearos-remove-default-user.service << 'UNIT'
+  cat > /usr/local/sbin/pearos-finalize-user.sh << FINALIZE
+#!/bin/bash
+exec >> /var/log/pearos-finalize-user.log 2>&1
+echo "=== pearOS finalize-user: \$(date) ==="
+set -x
+usermod -l "$USER_NAME" -d "/home/$USER_NAME" -m -c "$FULL_NAME" -s /bin/bash -aG sudo default
+if getent group default >/dev/null && [ "\$(id -gn "$USER_NAME")" = "default" ]; then
+  groupmod -n "$USER_NAME" default
+fi
+grep -rlI "/home/default" "/home/$USER_NAME" 2>/dev/null | while read -r bookmark_file; do
+  sed -i "s#/home/default#/home/$USER_NAME#g" "\$bookmark_file"
+done
+for f in /etc/sudoers /etc/sudoers.d/*; do
+  [ -f "\$f" ] && sed -i '/^[[:space:]]*default[[:space:]]/d' "\$f"
+done
+visudo -c || true
+systemctl disable pearos-finalize-user.service
+rm -f /etc/systemd/system/pearos-finalize-user.service "\$0"
+FINALIZE
+  chmod 700 /usr/local/sbin/pearos-finalize-user.sh
+
+  cat > /etc/systemd/system/pearos-finalize-user.service << 'UNIT'
 [Unit]
-Description=Remove pearOS default live user
+Description=Rename pearOS default live user into the real user account
 DefaultDependencies=no
 Before=sddm.service display-manager.service
 After=local-fs.target systemd-user-sessions.service
@@ -117,19 +126,17 @@ ConditionPathExists=/home/default
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/usr/sbin/userdel -rf default
-ExecStartPost=/bin/systemctl disable pearos-remove-default-user.service
-ExecStartPost=/bin/rm -f /etc/systemd/system/pearos-remove-default-user.service
+ExecStart=/usr/local/sbin/pearos-finalize-user.sh
 
 [Install]
 WantedBy=sysinit.target
 UNIT
-  if ! systemctl enable pearos-remove-default-user.service; then
-    error_exit "Failed to schedule removal of default user"
+  if ! systemctl enable pearos-finalize-user.service; then
+    error_exit "Failed to schedule finalization of $USER_NAME"
   fi
-  echo "Default user will be removed before SDDM starts on next boot"
+  echo "$USER_NAME will be finalized (renamed from default) before SDDM starts on next boot"
 else
-  echo "Default user does not exist, skipping..."
+  error_exit "Default user does not exist, cannot finalize $USER_NAME"
 fi
 
 # Set/load the keymap.
@@ -289,13 +296,12 @@ if [ -f "$PROFILE_PIC_FILE" ] && [ -s "$PROFILE_PIC_FILE" ]; then
   esac
   if [ -n "$PROFILE_PIC_SRC" ] && [ -f "$PROFILE_PIC_SRC" ] && [ -r "$PROFILE_PIC_SRC" ]; then
     # 1. New user's home avatar
-    USER_HOME="/home/$USER_NAME"
+    USER_HOME="/home/default"
     USER_FACE="$USER_HOME/.face.icon"
     if [ -d "$USER_HOME" ]; then
       if ! cp -f "$PROFILE_PIC_SRC" "$USER_FACE"; then
         error_exit "Failed to copy profile picture to $USER_FACE"
       fi
-      chown "$USER_NAME:$USER_NAME" "$USER_FACE" 2>/dev/null || true
       echo "Profile picture set for user $USER_NAME"
     fi
 
@@ -370,14 +376,16 @@ if ! chmod -R 0777 /usr/share/extras; then
 fi
 
 # Everything below this point applies choices collected by pages that ran
-# as the live 'default' user, before $USER_NAME existed as a Unix account
+# as the live 'default' user, before $USER_NAME existed as its final name
 # (Choose Your Look, Accessibility, Analytics, Screen Time, Touch ID). None
 # of those pages could apply their setting directly - kwriteconfig6/xkbset/
-# fprintd-enroll would have landed on 'default' and been lost when it's
-# deleted on next boot - so they only left their choice in /tmp/*. This is
-# the other half of that handoff, same idea as the profile-picture copy
-# above, just for settings instead of a file.
-USER_HOME="/home/$USER_NAME"
+# fprintd-enroll would have landed under 'default's own session - so they
+# only left their choice in /tmp/*. This is the other half of that handoff,
+# same idea as the profile-picture copy above, just for settings instead of
+# a file. default's home is what pearos-finalize-user.service renames into
+# $USER_NAME's home at next boot, so everything written into it here below
+# carries over automatically.
+USER_HOME="/home/default"
 AUTOSTART_DIR="$USER_HOME/.config/autostart"
 SCRIPTS_DIR="$USER_HOME/.config/pearos-scripts"
 HAVE_USER_HOME=false
@@ -457,7 +465,7 @@ if $HAVE_USER_HOME && { [ -f /tmp/accessibility_prefs ] || [ -f /tmp/analytics_p
   SEND_DIAGNOSTICS="$(get_pref /tmp/analytics_prefs send_diagnostics)"
   SHARE_CRASH_DATA="$(get_pref /tmp/analytics_prefs share_crash_data)"
 
-  run_as_user() { su - "$USER_NAME" -c "$1" 2>/dev/null || true; }
+  run_as_user() { su - default -c "$1" 2>/dev/null || true; }
 
   [ "$REDUCE_MOTION" = "True" ] && \
     run_as_user "kwriteconfig6 --file kdeglobals --group KDE --key AnimationDurationFactor 0"
@@ -519,7 +527,6 @@ RestartSec=5
 [Install]
 WantedBy=graphical-session.target
 EOF
-  chown -R "$USER_NAME:$USER_NAME" "$ST_DATA_DIR" "$ST_SYSTEMD_DIR"
 
   # Loading the KWin script and enabling the systemd --user unit both need
   # a live session (D-Bus, systemd --user instance) - defer to first login.
@@ -554,27 +561,14 @@ if [ "$(cat /tmp/touchid_enabled 2>/dev/null)" = "true" ] && $HAVE_USER_HOME; th
 fi
 
 # ── PearID ────────────────────────────────────────────────────────────
-# Same problem as Touch ID: signing in during the wizard (pages/pearid.py)
-# necessarily happens as 'default', and pearID/token_storage.sh saves the
-# session token to whichever of these two places it picked - a keyring
-# entry scoped to 'default's own login session (nothing to migrate, that
-# session is gone), or, if no secret service was available, a plain file
-# at ~/.pearid_token. Only the file case is migratable; best-effort, same
-# as the fprintd copy above - if it was the keyring, the new user just
-# ends up signed out and can sign back in from Settings.
-if $HAVE_USER_HOME && [ -f /home/default/.pearid_token ]; then
-  echo "Migrating PearID session to $USER_NAME..."
-  if cp /home/default/.pearid_token "$USER_HOME/.pearid_token" 2>/dev/null; then
-    chmod 600 "$USER_HOME/.pearid_token"
-    chown "$USER_NAME:$USER_NAME" "$USER_HOME/.pearid_token"
-    echo "PearID session migrated to $USER_NAME"
-  else
-    echo "WARNING: Failed to migrate PearID session to $USER_NAME" >&2
-  fi
-fi
-
-if $HAVE_USER_HOME; then
-  chown -R "$USER_NAME:$USER_NAME" "$AUTOSTART_DIR" "$SCRIPTS_DIR" 2>/dev/null || true
+# pearID/token_storage.sh saves the session token to whichever of two
+# places it picked - a keyring entry scoped to 'default's own login
+# session (nothing to do, that session is gone after the rename anyway),
+# or, if no secret service was available, a plain file at ~/.pearid_token
+# - already sitting in $USER_HOME since it's the same account, just not
+# renamed yet.
+if $HAVE_USER_HOME && [ -f "$USER_HOME/.pearid_token" ]; then
+  chmod 600 "$USER_HOME/.pearid_token"
 fi
 
 # Remove useless packages and their desktop entries

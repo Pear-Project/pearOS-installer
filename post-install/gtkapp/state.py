@@ -233,6 +233,11 @@ class WizardState:
     def save_touchid(self, enabled):
         write_tmp("touchid_enabled", "true" if enabled else "false")
 
+    def save_auto_update(self, mode):
+        """mode: 'full' (download + install automatically) or
+        'download_only' (download automatically, install manually)."""
+        write_tmp("auto_update_mode", mode)
+
     # ── Profile pictures ────────────────────────────────────────────
     def list_profile_pictures(self):
         exts = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp"}

@@ -23,6 +23,8 @@ renderer forced back to ngl/vulkan by the environment, ...), pages/hello.py
 falls back to a flat frosted look instead — this class never raises out of
 do_snapshot().
 """
+import math
+
 import cairo
 import gi
 import numpy as np
@@ -131,6 +133,15 @@ void mainImage(out vec4 fragColor,
 
 
 def _surface_to_texture(surface):
+    # Tried wrapping the surface's raw premultiplied bytes directly via
+    # Gdk.MemoryTexture instead of this pixbuf round-trip, on the theory
+    # that skipping the unpremultiply/repremultiply would be cheaper - it
+    # measured *worse* in practice (this runs twice per frame, so any
+    # per-upload regression is doubled): the legacy "gl" renderer this page
+    # requires for Gsk.GLShader apparently doesn't have as fast a path for
+    # arbitrary GdkMemoryTexture uploads as it does for a texture built from
+    # a GdkPixbuf. Reverted - measure before trusting a "fewer conversions"
+    # theory over what the renderer actually does with each texture type.
     w, h = surface.get_width(), surface.get_height()
     pixbuf = Gdk.pixbuf_get_from_surface(surface, 0, 0, w, h)
     return Gdk.Texture.new_for_pixbuf(pixbuf)
@@ -181,6 +192,32 @@ def _ops_bbox(ops):
     return min(xs), max(xs), min(ys), max(ys)
 
 
+def _flat_subpaths(flat_path):
+    subpaths = []
+    current = []
+    for ptype, points in flat_path:
+        if ptype == cairo.PATH_MOVE_TO:
+            if len(current) >= 2:
+                subpaths.append(current)
+            current = [points]
+        elif ptype == cairo.PATH_LINE_TO:
+            current.append(points)
+        elif ptype == cairo.PATH_CLOSE_PATH:
+            if current:
+                current.append(current[0])
+    if len(current) >= 2:
+        subpaths.append(current)
+    result = []
+    for points in subpaths:
+        length = 0.0
+        for i in range(1, len(points)):
+            x0, y0 = points[i - 1]
+            x1, y1 = points[i]
+            length += math.hypot(x1 - x0, y1 - y0)
+        result.append((points, length))
+    return result
+
+
 class LiquidGelText(Gtk.Widget):
     """duration_s/mask_ops/dash_len/translate/viewbox describe the animated
     stroke exactly like stroke_anim.AnimatedCanvas + svgpath — see
@@ -196,10 +233,17 @@ class LiquidGelText(Gtk.Widget):
     def __init__(
         self, duration_s, mask_ops, dash_len, translate, viewbox, easing,
         zoom_start_ops=None, zoom_factor=2.2, zoom_fraction=0.35,
+        line_width=35, flat_path=None,
     ):
         super().__init__()
         self._duration = duration_s
         self._ops = mask_ops
+        self._flat_path = flat_path
+        self._flat_subpaths = _flat_subpaths(flat_path) if flat_path is not None else None
+        self._flat_total_length = (
+            sum(length for _, length in self._flat_subpaths) if self._flat_subpaths else 0.0
+        )
+        self._line_width = line_width
         self._dash_len = dash_len
         self._translate = translate
         self._viewbox = viewbox
@@ -216,6 +260,8 @@ class LiquidGelText(Gtk.Widget):
         self._on_shader_result = None
         self._crop_cache_key = None
         self._crop_cache_texture = None
+        self._mask_surfaces = None  # (hard, soft) cairo.ImageSurface, sized lazily
+        self._mask_surfaces_size = None
 
     def set_wallpaper(self, pixbuf):
         self._wallpaper_pixbuf = pixbuf
@@ -358,23 +404,69 @@ class LiquidGelText(Gtk.Widget):
         cr.translate(ox, oy)
         cr.scale(scale, scale)
         cr.translate(*self._translate)
-        path_to_cairo(cr, self._ops)
-        cr.set_line_width(35)
+        cr.set_line_width(self._line_width)
         cr.set_line_cap(1)
         cr.set_line_join(1)
-        offset = self._dash_len * (1.0 - self._progress)
-        cr.set_dash([self._dash_len, self._dash_len], offset)
         cr.set_source_rgba(1, 1, 1, 1)
-        cr.stroke()
+
+        if self._ops is not None:
+            path_to_cairo(cr, self._ops)
+            offset = self._dash_len * (1.0 - self._progress)
+            cr.set_dash([self._dash_len, self._dash_len], offset)
+            cr.stroke()
+            return
+
+        revealed = self._flat_total_length * self._progress
+        cum = 0.0
+        for points, length in self._flat_subpaths:
+            start = cum
+            end = cum + length
+            cum = end
+            if revealed <= start:
+                continue
+            cr.new_path()
+            cr.move_to(*points[0])
+            for p in points[1:]:
+                cr.line_to(*p)
+            if revealed >= end:
+                cr.set_dash([], 0)
+            else:
+                local_revealed = revealed - start
+                seg_len = max(length, 1.0)
+                offset = seg_len - local_revealed
+                cr.set_dash([seg_len + 1, seg_len + 1], offset)
+            cr.stroke()
 
     def _mask_textures(self, w, h):
         """Returns (hard, soft) textures - see the module docstring for why
         two are needed instead of one."""
-        hard_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, max(1, int(w)), max(1, int(h)))
-        self._stroke_path(cairo.Context(hard_surface), w, h)
+        size = (max(1, int(w)), max(1, int(h)))
+        # Reuse the same two ImageSurfaces across frames instead of
+        # malloc'ing ~2MB of fresh pixel buffers 60 times a second - only
+        # reallocated if the canvas is actually resized (essentially never,
+        # this page doesn't resize mid-animation).
+        if self._mask_surfaces is None or self._mask_surfaces_size != size:
+            self._mask_surfaces = (
+                cairo.ImageSurface(cairo.FORMAT_ARGB32, *size),
+                cairo.ImageSurface(cairo.FORMAT_ARGB32, *size),
+            )
+            self._mask_surfaces_size = size
+        hard_surface, soft_surface = self._mask_surfaces
 
-        soft_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, max(1, int(w)), max(1, int(h)))
-        self._stroke_path(cairo.Context(soft_surface), w, h)
+        hard_cr = cairo.Context(hard_surface)
+        hard_cr.set_operator(cairo.OPERATOR_CLEAR)
+        hard_cr.paint()
+        hard_cr.set_operator(cairo.OPERATOR_OVER)
+        self._stroke_path(hard_cr, w, h)
+
+        # Blitting the already-rendered hard mask instead of re-running
+        # _stroke_path() (parsing + dashing + rasterizing the same stroke a
+        # second time) - pixel-identical starting point, one cairo paint()
+        # instead of a full stroke.
+        soft_cr = cairo.Context(soft_surface)
+        soft_cr.set_operator(cairo.OPERATOR_SOURCE)
+        soft_cr.set_source_surface(hard_surface, 0, 0)
+        soft_cr.paint()
         # ~1/5 of the 35px stroke width: enough that the whole cross-section
         # reads as a rounded tube (per the reference photos - a solid glass
         # rod, not a flat panel with a thin bevel), without merging nearby

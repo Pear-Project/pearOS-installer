@@ -31,7 +31,7 @@ PAGE_ORDER = [
     "hello", "country", "wifi", "migration_assistant", "written_spoken",
     "language", "keymap", "accessibility", "data_privacy", "pearid", "user",
     "touchid_enable", "touchid_setup", "agreement", "location_services",
-    "timezone", "analytics", "screen_time", "piri", "look", "finish",
+    "timezone", "analytics", "screen_time", "piri", "look", "update", "welcome", "finish",
 ]
 
 
@@ -183,6 +183,8 @@ class WizardApp(Gtk.Application):
         from .pages.touchid_enable import TouchIDEnablePage
         from .pages.touchid_setup import TouchIDSetupPage
         from .pages.look import LookPage
+        from .pages.update import UpdatePage
+        from .pages.welcome import WelcomePage
         from .pages.agreement import AgreementPage
         from .pages.finish import FinishPage
 
@@ -206,6 +208,8 @@ class WizardApp(Gtk.Application):
             "touchid_enable": TouchIDEnablePage,
             "touchid_setup": TouchIDSetupPage,
             "look": LookPage,
+            "update": UpdatePage,
+            "welcome": WelcomePage,
             "agreement": AgreementPage,
             "finish": FinishPage,
         }

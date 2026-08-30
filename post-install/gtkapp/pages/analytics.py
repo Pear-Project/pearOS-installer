@@ -10,7 +10,17 @@ This page runs as the live 'default' user, before the real account
 exists, so it can't kwriteconfig6 directly (that would land in
 'default's home and be lost when the account is deleted on next boot) -
 it only persists the choice; post_setup applies it into the real user's
-kdeglobals afterwards, same handoff as save_look()/save_accessibility()."""
+kdeglobals afterwards, same handoff as save_look()/save_accessibility().
+
+Text wrap: matches the reference's ~446px-wide paragraph column (of the
+800px card). wrap=True + max-width-chars alone doesn't reliably cap this
+label's rendered width in this environment - the vertical content Box
+still stretches it out to the card's full content width regardless of
+the chars cap (confirmed by measuring the actual allocation: identical
+~615px regardless of what max-width-chars was set to). Hard-wrapping the
+text ourselves via textwrap.fill, this page's original approach, sizes
+the label from its longest *already-broken* line instead, which does
+reliably constrain it."""
 import textwrap
 
 import gi
@@ -24,7 +34,11 @@ from .analytics_icon import AnalyticsIcon
 from .privacy_icon import InfoIcon
 
 _LEFT_MARGIN = 176
-_WRAP_CHARS = 48
+# Measured by rendering this exact page and comparing against a real
+# macOS Setup Assistant screenshot of it: the reference's paragraph
+# column reaches about 446px of the 800px-wide card (176px left margin,
+# ~622px right edge) - wider than this page's original 48-char guess.
+_WRAP_CHARS = 62
 
 
 def _paragraph(text):
