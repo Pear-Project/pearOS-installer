@@ -22,6 +22,17 @@ from .analytics_icon import AnalyticsIcon
 from .privacy_icon import InfoIcon
 
 _LEFT_MARGIN = 176
+_MAX_WIDTH_CHARS = 35
+
+
+def _paragraph(text):
+    label = Gtk.Label(label=text)
+    label.add_css_class("description")
+    label.set_wrap(True)
+    label.set_justify(Gtk.Justification.LEFT)
+    label.set_halign(Gtk.Align.START)
+    label.set_max_width_chars(_MAX_WIDTH_CHARS)
+    return label
 
 
 class AnalyticsPage:
@@ -47,33 +58,23 @@ class AnalyticsPage:
 
         name = OS_RELEASE.rebrand(OS_RELEASE.pretty_name)
 
-        self.subtitle = Gtk.Label(
-            label=f"Help {name} and app developers improve their products "
+        self.subtitle = _paragraph(
+            f"Help {name} and app developers improve their products "
             "and services automatically."
         )
-        self.subtitle.add_css_class("description")
-        self.subtitle.set_wrap(True)
-        self.subtitle.set_justify(Gtk.Justification.LEFT)
-        self.subtitle.set_halign(Gtk.Align.START)
         self.subtitle.set_margin_start(_LEFT_MARGIN)
         self.subtitle.set_margin_top(8)
-        self.subtitle.set_max_width_chars(56)
         content.append(self.subtitle)
 
-        self.detail = Gtk.Label(
-            label=f"To help {name} improve its products and services, "
+        self.detail = _paragraph(
+            f"To help {name} improve its products and services, "
             f"pre-release beta versions of {name} automatically send "
             "diagnostics and usage data. This can be changed in the "
             "Privacy & Security pane of System Settings. Diagnostic data "
             "may include location information."
         )
-        self.detail.add_css_class("description")
-        self.detail.set_wrap(True)
-        self.detail.set_justify(Gtk.Justification.LEFT)
-        self.detail.set_halign(Gtk.Align.START)
         self.detail.set_margin_start(_LEFT_MARGIN)
         self.detail.set_margin_top(16)
-        self.detail.set_max_width_chars(56)
         content.append(self.detail)
 
         spacer = Gtk.Box()
