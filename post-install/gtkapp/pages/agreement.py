@@ -5,7 +5,7 @@ import gi
 gi.require_version("Gtk", "4.0")
 from gi.repository import Gtk
 
-from ..widgets import page_root, make_title, make_description
+from ..widgets import page_root, make_title, make_description, show_dialog, WarningIcon
 
 LICENSE_TEXT = """1. Scope of the Terms of Service
 
@@ -201,8 +201,17 @@ class AgreementPage:
         content.append(scroller)
 
         self.widget, self.card = page_root(
-            content, on_back=self._on_back, on_forward=self._on_continue, forward_label="Continue"
+            content, on_back=self._on_back, on_forward=self._on_continue, forward_label="Agree"
         )
+
+        self.disagree_btn = Gtk.Button(label="Disagree")
+        self.disagree_btn.add_css_class("nav-button")
+        self.disagree_btn.set_halign(Gtk.Align.END)
+        self.disagree_btn.set_valign(Gtk.Align.END)
+        self.disagree_btn.set_margin_end(115)
+        self.disagree_btn.set_margin_bottom(20)
+        self.disagree_btn.connect("clicked", self._on_disagree)
+        self.card.overlay.add_overlay(self.disagree_btn)
 
     def on_show(self):
         self.title.set_label(self.app.t("agreement.title", "Terms and Conditions"))
@@ -214,7 +223,23 @@ class AgreementPage:
                 "Please read them carefully",
             )
         )
-        self.card.forward_button.set_label(self.app.t("agreement.continue", "Continue"))
+        self.card.forward_button.set_label(self.app.t("agreement.continue", "Agree"))
+
+    def _on_disagree(self, _btn):
+        show_dialog(
+            self.card,
+            self.app.t(
+                "agreement.mustAgreeTitle",
+                "You Must Agree to Continue",
+            ),
+            self.app.t(
+                "agreement.mustAgree",
+                "If you don't agree to the Terms and Conditions, you can't use "
+                "this pearOS Computer.",
+            ),
+            buttons=[("OK", "dialog-btn-primary", None)],
+            icon_widget=WarningIcon(),
+        )
 
     def _on_back(self):
         self.app.go_to("touchid_setup")

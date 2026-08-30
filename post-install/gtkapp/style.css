@@ -641,3 +641,64 @@ window.dark-mode .utc-toggle label {
   padding: 6px;
   font-size: 12px;
 }
+
+.dialog-backdrop {
+  background-color: rgba(0, 0, 0, 0.35);
+}
+
+.dialog-card {
+  background-color: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  min-width: 320px;
+}
+
+window.dark-mode .dialog-card {
+  background-color: #2c2c2e;
+}
+
+.dialog-title {
+  font-family: "Sen";
+  font-weight: bold;
+  font-size: 14px;
+  color: #1d1d1f;
+}
+
+window.dark-mode .dialog-title {
+  color: #f2f2f2;
+}
+
+.dialog-description {
+  font-family: "Sen";
+  font-size: 12px;
+  color: #6e6e73;
+}
+
+window.dark-mode .dialog-description {
+  color: #a1a1a6;
+}
+
+.dialog-btn-primary {
+  background-color: #0570fb;
+  background-image: none;
+  color: #ffffff;
+  border-radius: 999px;
+  padding: 6px 18px;
+  font-family: "Sen";
+  font-size: 13px;
+}
+
+.dialog-btn-secondary {
+  background-color: #e5e5e5;
+  background-image: none;
+  color: #1d1d1f;
+  border-radius: 999px;
+  padding: 6px 18px;
+  font-family: "Sen";
+  font-size: 13px;
+}
+
+window.dark-mode .dialog-btn-secondary {
+  background-color: #3a3b42;
+  color: #f2f2f2;
+}

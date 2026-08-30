@@ -1,6 +1,8 @@
 """Shared page-chrome widgets: the 800x600 '.app' card, back/continue
 buttons, title/description labels — reused by every wizard step page,
 mirroring the markup shared by all templates/*.html."""
+import math
+
 import gi
 
 gi.require_version("Gtk", "4.0")
@@ -181,3 +183,87 @@ def page_root(content_widget, on_back, on_forward, forward_label="Continue", sho
         centering.append(make_accessibility_footer())
     bg.add_overlay(centering)
     return bg, card
+
+
+class WarningIcon(Gtk.DrawingArea):
+    def __init__(self, size=52):
+        super().__init__()
+        self.set_content_width(size)
+        self.set_content_height(size)
+        self.set_draw_func(self._draw)
+
+    def _draw(self, _area, cr, w, h):
+        cx, cy, r = w / 2, h / 2, min(w, h) / 2
+        cr.arc(cx, cy, r, 0, 2 * math.pi)
+        cr.set_source_rgb(0.96, 0.6, 0.07)
+        cr.fill()
+        cr.set_source_rgb(1, 1, 1)
+        cr.set_line_width(r * 0.18)
+        cr.set_line_cap(1)
+        cr.move_to(cx, cy - r * 0.45)
+        cr.line_to(cx, cy + r * 0.1)
+        cr.stroke()
+        cr.arc(cx, cy + r * 0.45, r * 0.09, 0, 2 * math.pi)
+        cr.fill()
+
+
+def show_dialog(card, title, description, buttons, icon_widget=None):
+    backdrop = Gtk.Box()
+    backdrop.add_css_class("dialog-backdrop")
+    backdrop.set_hexpand(True)
+    backdrop.set_vexpand(True)
+    card.overlay.add_overlay(backdrop)
+
+    dialog = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+    dialog.add_css_class("dialog-card")
+    dialog.set_halign(Gtk.Align.CENTER)
+    dialog.set_valign(Gtk.Align.CENTER)
+
+    if icon_widget is not None:
+        icon_widget.set_halign(Gtk.Align.CENTER)
+        icon_widget.set_margin_top(24)
+        dialog.append(icon_widget)
+
+    title_label = Gtk.Label(label=title)
+    title_label.add_css_class("dialog-title")
+    title_label.set_wrap(True)
+    title_label.set_justify(Gtk.Justification.CENTER)
+    title_label.set_max_width_chars(36)
+    title_label.set_margin_top(14)
+    title_label.set_margin_start(24)
+    title_label.set_margin_end(24)
+    dialog.append(title_label)
+
+    if description:
+        desc_label = Gtk.Label(label=description)
+        desc_label.add_css_class("dialog-description")
+        desc_label.set_wrap(True)
+        desc_label.set_justify(Gtk.Justification.CENTER)
+        desc_label.set_max_width_chars(40)
+        desc_label.set_margin_top(4)
+        desc_label.set_margin_start(24)
+        desc_label.set_margin_end(24)
+        dialog.append(desc_label)
+
+    button_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+    button_row.set_halign(Gtk.Align.CENTER)
+    button_row.set_margin_top(18)
+    button_row.set_margin_bottom(22)
+    dialog.append(button_row)
+    card.overlay.add_overlay(dialog)
+
+    def close_dialog():
+        card.overlay.remove_overlay(backdrop)
+        card.overlay.remove_overlay(dialog)
+
+    for label, css_class, callback in buttons:
+        btn = Gtk.Button(label=label)
+        btn.add_css_class(css_class)
+
+        def on_click(_b, cb=callback):
+            close_dialog()
+            if cb:
+                cb()
+
+        btn.connect("clicked", on_click)
+        button_row.append(btn)
