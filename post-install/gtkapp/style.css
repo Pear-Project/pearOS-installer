@@ -713,6 +713,7 @@ dropdown.timezone-dropdown button {
   font-family: "Sen";
   font-size: 13px;
   padding: 4px 8px;
+  min-width: 140px;
 }
 
 dropdown.timezone-dropdown button:hover {
@@ -720,22 +721,25 @@ dropdown.timezone-dropdown button:hover {
   background-image: none;
 }
 
-dropdown.timezone-dropdown popover {
+popover,
+popover contents,
+popover listview {
   background-color: #ffffff;
   background-image: none;
 }
 
-dropdown.timezone-dropdown popover contents {
+popover listview row {
   background-color: #ffffff;
-  background-image: none;
-}
-
-dropdown.timezone-dropdown listview row {
   background-image: none;
   color: #1d1d1f;
 }
 
-dropdown.timezone-dropdown listview row:selected {
+popover listview row:hover {
+  background-color: #f0f0f0;
+  background-image: none;
+}
+
+popover listview row:selected {
   background-color: #0570fb;
   background-image: none;
   color: #ffffff;
