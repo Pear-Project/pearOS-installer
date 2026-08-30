@@ -11,6 +11,8 @@ exists, so it can't kwriteconfig6 directly (that would land in
 'default's home and be lost when the account is deleted on next boot) -
 it only persists the choice; post_setup applies it into the real user's
 kdeglobals afterwards, same handoff as save_look()/save_accessibility()."""
+import textwrap
+
 import gi
 
 gi.require_version("Gtk", "4.0")
@@ -22,16 +24,14 @@ from .analytics_icon import AnalyticsIcon
 from .privacy_icon import InfoIcon
 
 _LEFT_MARGIN = 176
-_MAX_WIDTH_CHARS = 35
+_WRAP_CHARS = 48
 
 
 def _paragraph(text):
-    label = Gtk.Label(label=text)
+    label = Gtk.Label(label=textwrap.fill(text, width=_WRAP_CHARS))
     label.add_css_class("description")
-    label.set_wrap(True)
     label.set_justify(Gtk.Justification.LEFT)
     label.set_halign(Gtk.Align.START)
-    label.set_max_width_chars(_MAX_WIDTH_CHARS)
     return label
 
 
@@ -43,10 +43,10 @@ class AnalyticsPage:
         content.set_hexpand(True)
         content.set_vexpand(True)
 
-        icon = AnalyticsIcon(size=76)
+        icon = AnalyticsIcon()
         icon.set_halign(Gtk.Align.START)
         icon.set_margin_start(_LEFT_MARGIN)
-        icon.set_margin_top(70)
+        icon.set_margin_top(84)
         content.append(icon)
 
         self.title = Gtk.Label(label="Analytics")
