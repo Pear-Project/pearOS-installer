@@ -32,7 +32,7 @@ class PearIDPage:
         content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         content.set_hexpand(True)
 
-        icon = AccountServicesIcon(height=70)
+        icon = AccountServicesIcon(tile=50)
         icon.set_halign(Gtk.Align.START)
         icon.set_margin_start(_LEFT_MARGIN + 25)
         icon.set_margin_top(85)

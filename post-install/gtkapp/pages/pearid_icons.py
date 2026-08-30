@@ -24,22 +24,21 @@ def _tile(cr, x, y, size, radius):
 
 
 class AccountServicesIcon(Gtk.DrawingArea):
-    """4 tiles in a row - height drives the tile size, so width has to be
-    computed from it (4 tiles + 3 gaps), not passed independently, or the
-    later tiles render past the widget's own allocated width and get
-    clipped by its bounds."""
+    _STEP_FACTOR = 0.98
+    _RISE_FACTOR = 0.12
 
-    def __init__(self, height=48):
+    def __init__(self, tile=40):
         super().__init__()
-        tile = height * 0.82
-        gap = tile * 0.08
-        self.set_content_width(int(tile * 4 + gap * 3))
-        self.set_content_height(height)
+        step = tile * self._STEP_FACTOR
+        rise = tile * self._RISE_FACTOR
+        self.set_content_width(int(tile + step * 3))
+        self.set_content_height(int(tile + rise * 3))
         self.set_draw_func(self._draw)
 
     def _draw(self, _area, cr, w, h):
-        tile = h * 0.82
-        gap = tile * 0.08
+        tile = h / (1 + 3 * self._RISE_FACTOR)
+        step = tile * self._STEP_FACTOR
+        rise = tile * self._RISE_FACTOR
         x = 0
         y = h - tile
 
@@ -56,7 +55,8 @@ class AccountServicesIcon(Gtk.DrawingArea):
         cr.fill()
 
         # Notes/pencil
-        x += tile + gap
+        x += step
+        y -= rise
         _tile(cr, x, y, tile, tile * 0.28)
         cr.set_source_rgb(1, 1, 1)
         cr.fill_preserve()
@@ -70,7 +70,8 @@ class AccountServicesIcon(Gtk.DrawingArea):
         cr.stroke()
 
         # Music note
-        x += tile + gap
+        x += step
+        y -= rise
         _tile(cr, x, y, tile, tile * 0.28)
         cr.set_source_rgb(*_BLUE)
         cr.fill()
@@ -86,7 +87,8 @@ class AccountServicesIcon(Gtk.DrawingArea):
         cr.stroke()
 
         # Message bubble
-        x += tile + gap
+        x += step
+        y -= rise
         _tile(cr, x, y, tile, tile * 0.28)
         cr.set_source_rgb(1, 1, 1)
         cr.fill_preserve()
