@@ -8,6 +8,8 @@ pages) - just acknowledgement + Continue. "Learn More..." has nowhere
 real to link to yet (no privacy-policy page exists in this app), so it's
 inert for now - matches how touchid_setup.py etc handle not-yet-real
 features, not a broken link."""
+import textwrap
+
 import gi
 
 gi.require_version("Gtk", "4.0")
@@ -16,6 +18,8 @@ from gi.repository import Gtk
 from ..osrelease import OS_RELEASE
 from ..widgets import page_root
 from .privacy_icon import InfoIcon, PrivacyIcon
+
+_WRAP_CHARS = 62
 
 # Measured off a real macOS Setup Assistant screenshot of this exact page
 # (text column started at x=159 in a 723-wide card, same as
@@ -66,12 +70,11 @@ class DataPrivacyPage:
         paragraphs_box.set_margin_start(_LEFT_MARGIN)
         paragraphs_box.set_margin_top(8)
         for text in PARAGRAPHS:
-            label = Gtk.Label(label=text.format(name=name))
+            wrapped = textwrap.fill(text.format(name=name), width=_WRAP_CHARS)
+            label = Gtk.Label(label=wrapped)
             label.add_css_class("description")
-            label.set_wrap(True)
             label.set_justify(Gtk.Justification.LEFT)
             label.set_halign(Gtk.Align.START)
-            label.set_max_width_chars(56)
             paragraphs_box.append(label)
         content.append(paragraphs_box)
 

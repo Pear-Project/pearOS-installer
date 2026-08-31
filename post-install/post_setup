@@ -74,9 +74,13 @@ if printf "%s" "$USER_NAME" | grep -Eoq "^[a-z][a-z0-9-]*$" \
     exit 2
   fi
 
-# Remove the script from the autostart
+# Remove the script from the autostart. /etc/skel only matters for future
+# useradd -m calls, not for default's own already-existing home - which is
+# what becomes the real user's home via the rename in the finalize script
+# below, so it needs cleaning up directly too.
 echo "Removing autostart entry..."
 rm -rf /etc/skel/.config/autostart/xyz.pearos-post-install.desktop
+rm -f /home/default/.config/autostart/xyz.pearos-post-install.desktop
 
 # ── Security-critical: create the real user + lock down 'default' ──────
 # Done FIRST, before any config step below (keymap, locale, timezone,

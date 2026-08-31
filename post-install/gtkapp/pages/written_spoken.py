@@ -12,6 +12,7 @@ from gi.repository import Gtk
 from .. import i18n as i18n_mod
 from ..widgets import page_root
 from .globe_grid_icon import GlobeGridIcon
+from .input_dictation_icons import KeyboardIcon, MicrophoneIcon
 from .keymap import LAYOUTS
 
 _LAYOUT_NAMES = dict(LAYOUTS)
@@ -99,16 +100,8 @@ class WrittenSpokenPage:
         content.append(rows_box)
 
         self.preferred_row = _SummaryRow(GlobeGridIcon(size=26), "Preferred Languages")
-        self.input_row = _SummaryRow(
-            Gtk.Image.new_from_icon_name("input-keyboard-symbolic"), "Input Sources"
-        )
-        self.input_row.widget.get_first_child().set_pixel_size(24)
-        self.input_row.widget.get_first_child().add_css_class("summary-row-icon")
-        self.dictation_row = _SummaryRow(
-            Gtk.Image.new_from_icon_name("audio-input-microphone-symbolic"), "Dictation"
-        )
-        self.dictation_row.widget.get_first_child().set_pixel_size(24)
-        self.dictation_row.widget.get_first_child().add_css_class("summary-row-icon")
+        self.input_row = _SummaryRow(KeyboardIcon(size=24), "Input Sources")
+        self.dictation_row = _SummaryRow(MicrophoneIcon(size=24), "Dictation")
         for row in (self.preferred_row, self.input_row, self.dictation_row):
             rows_box.append(row.widget)
 
