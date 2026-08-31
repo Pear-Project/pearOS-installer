@@ -47,8 +47,11 @@ if [ "$#" -ne 9 ]; then
 fi
 
 # Various settings for the installation process
-KEYMAP="$1" # us
-LOCALE="$2" # en_US.UTF-8
+KEYMAP="${1:-us}" # us
+LOCALE="${2:-en_US.UTF-8}" # en_US.UTF-8 - must never be empty: an empty
+                            # $LOCALE turns the locale.gen sed below into
+                            # "s/#//", which strips the leading # off every
+                            # line instead of just the intended one.
 ZONE="$3" # Europe/Bucharest
 set +x
 user_passwd="$4" # user password: pear
@@ -86,7 +89,14 @@ rm -rf /etc/skel/.config/autostart/xyz.pearos-post-install.desktop
 # unauthenticated root on every boot.
 
 set +x
-if ! chpasswd <<<"default:$user_passwd"; then
+# usermod -p writes the shadow hash directly instead of going through
+# chpasswd's own PAM stack - chpasswd invokes pam_chauthtok() on this
+# image, which fails with "Authentication token manipulation error" if a
+# pwquality/complexity module is stacked on it. The password was already
+# validated/chosen in the wizard's own UI, so it doesn't need to pass an
+# interactive complexity check a second time here.
+hashed_pw="$(openssl passwd -6 "$user_passwd")"
+if [ -z "$hashed_pw" ] || ! usermod -p "$hashed_pw" default; then
   set -x
   error_exit "Failed to set password for $USER_NAME"
 fi
