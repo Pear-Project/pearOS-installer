@@ -6,8 +6,14 @@ page" layout as migration_assistant.py/written_spoken.py/etc.
 Real toggle: enables/disables the geoclue.service systemd unit (KDE's own
 location backend), not just an in-memory flag like
 dpkg/system-settings/backend/privacymanager.cpp's setLocationServices()
-(which never actually persists anything - this goes one step further)."""
-import subprocess
+(which never actually persists anything - this goes one step further).
+
+Like accessibility/analytics/screentime/touchid, this page only records the
+choice (write_tmp via save_location_services()) - it doesn't run systemctl
+itself. It's a live 'default' user at this point, and geoclue.service is a
+system-wide unit, not a user one; post_setup (root, synchronous, with
+actual error checking) is what applies and verifies it, same reasoning as
+every other deferred setting."""
 
 import gi
 
@@ -19,14 +25,6 @@ from .location_icon import LocationArrowIcon
 from .privacy_icon import InfoIcon
 
 _LEFT_MARGIN = 176
-
-
-def _set_geoclue_enabled(enabled):
-    action = ["--now", "enable"] if enabled else ["--now", "disable"]
-    try:
-        subprocess.Popen(["sudo", "systemctl"] + action + ["geoclue.service"])
-    except OSError:
-        pass
 
 
 class LocationServicesPage:
@@ -95,5 +93,5 @@ class LocationServicesPage:
         self.app.go_to("agreement")
 
     def _on_continue(self):
-        _set_geoclue_enabled(self.toggle.get_active())
+        self.app.state.save_location_services(self.toggle.get_active())
         self.app.go_to("timezone")

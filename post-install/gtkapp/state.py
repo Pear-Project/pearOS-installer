@@ -233,6 +233,9 @@ class WizardState:
     def save_touchid(self, enabled):
         write_tmp("touchid_enabled", "true" if enabled else "false")
 
+    def save_location_services(self, enabled):
+        write_tmp("location_services_enabled", "true" if enabled else "false")
+
     def save_auto_update(self, mode):
         """mode: 'full' (download + install automatically) or
         'download_only' (download automatically, install manually)."""

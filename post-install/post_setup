@@ -82,6 +82,16 @@ echo "Removing autostart entry..."
 rm -rf /etc/skel/.config/autostart/xyz.pearos-post-install.desktop
 rm -f /home/default/.config/autostart/xyz.pearos-post-install.desktop
 
+# Same story for the "Install pearOS" live-desktop shortcut
+# (pearos-livecd-desktop): purging the package below only removes the
+# /etc/skel template for future accounts, not the copy already sitting in
+# default's home, which is what becomes the real user's home.
+echo "Removing live installer shortcut..."
+rm -f /etc/skel/Desktop/system_install.desktop
+rm -f /home/default/Desktop/system_install.desktop
+rm -f /etc/skel/.config/autostart/system_install.desktop
+rm -f /home/default/.config/autostart/system_install.desktop
+
 # ── Security-critical: create the real user + lock down 'default' ──────
 # Done FIRST, before any config step below (keymap, locale, timezone,
 # hostname, grub-mkconfig, ...). 'default' has passwordless root
@@ -461,14 +471,19 @@ case "$THEME_MODE" in
     ;;
 esac
 echo "Theme mode to apply: $THEME_MODE"
-# kde-theme-switch.sh needs a real, running Plasma session (DBus, XDG_RUNTIME_DIR)
-# to fully apply itself (GTK/Kvantum/etc components run partially otherwise).
-# The new user has no session yet at this point in the script, so instead of
-# faking one, drop a one-shot autostart entry that runs the switcher on the
-# user's own first real login (schedule_first_login(), defined above).
+# kde-theme-switch.sh writes config files directly (kdeglobals/plasmarc/
+# kcminputrc/Kvantum/gtk settings.ini/...) rather than shelling out to
+# plasma-apply-* - those need a live D-Bus session to do anything, which
+# doesn't exist yet at this point (no session for $USER_NAME until their
+# first real login). File writes don't need one: apply immediately, as
+# 'default' (same account, not renamed yet), same pattern as the
+# accessibility/analytics writes above.
 if [ -x "$THEME_SWITCHER" ] && $HAVE_USER_HOME; then
-  schedule_first_login "theme" "\"$THEME_SWITCHER\" --$THEME_MODE"
-  echo "Scheduled theme application for $USER_NAME on first login"
+  if su - default -c "\"$THEME_SWITCHER\" --$THEME_MODE"; then
+    echo "Applied theme ($THEME_MODE) for $USER_NAME"
+  else
+    echo "WARNING: Theme switcher exited with an error, theme may be partially applied" >&2
+  fi
 else
   echo "Theme switcher not found or $USER_NAME home missing, skipping theme sync" >&2
 fi
@@ -559,6 +574,29 @@ systemctl --user daemon-reload
 systemctl --user enable --now pearos-screentime.service >/dev/null 2>&1
 "
   echo "Scheduled Screen Time activation for $USER_NAME on first login"
+fi
+
+# ── Location Services ────────────────────────────────────────────────
+# geoclue.service is a system-wide unit, not scoped to any one user account
+# - unlike theme/accessx/screentime, it needs neither a live session nor
+# 'su - default': plain systemctl, applied and verified right here.
+if [ -f /tmp/location_services_enabled ]; then
+  LOCATION_ENABLED="$(cat /tmp/location_services_enabled)"
+  if [ "$LOCATION_ENABLED" = "true" ]; then
+    echo "Enabling Location Services (geoclue.service)..."
+    if systemctl enable --now geoclue.service; then
+      echo "Location Services enabled"
+    else
+      echo "WARNING: Failed to enable geoclue.service" >&2
+    fi
+  else
+    echo "Disabling Location Services (geoclue.service)..."
+    if systemctl disable --now geoclue.service; then
+      echo "Location Services disabled"
+    else
+      echo "WARNING: Failed to disable geoclue.service" >&2
+    fi
+  fi
 fi
 
 # ── Touch ID ──────────────────────────────────────────────────────────

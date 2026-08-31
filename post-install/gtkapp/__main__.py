@@ -6,13 +6,30 @@ import os
 import subprocess
 import sys
 
-# Gsk.GLShader (used by pages/hello.py for the liquid-gel lettering effect)
-# only works with GTK4's legacy "gl" renderer — the "ngl" renderer that is
-# now the default (GTK >= 4.14) reports "renderer does not support gl
-# shaders" at compile time. Must be set before GDK connects. hello.py still
-# works without this (falls back to a flat frosted look) if some future GTK
-# drops the gl renderer entirely.
-os.environ.setdefault("GSK_RENDERER", "gl")
+# Gsk.GLShader (used by pages/hello.py/welcome.py for the liquid-gel
+# lettering effect) only works with GTK4's legacy "gl" renderer — the "ngl"
+# renderer that is now the default (GTK >= 4.14) reports "renderer does not
+# support gl shaders" at compile time. Must be set before GDK connects.
+# hello.py/welcome.py still work without this (fall back to a flat frosted
+# look) if some future GTK drops the gl renderer entirely - which is also
+# why this is skipped under virtualization: on at least one real VirtualBox
+# guest, "gl" doesn't just lack GLShader support, it fails to render *any*
+# content on that widget at all (blank canvas, no exception, so nothing
+# ever triggers the fallback) - "ngl" is the far more battle-tested
+# renderer for a weak/virtualized GPU, so real hardware keeps the liquid-
+# gel effect and VMs get the plain fallback look instead of a blank canvas.
+def _running_in_vm():
+    try:
+        result = subprocess.run(
+            ["systemd-detect-virt"], capture_output=True, text=True, timeout=2
+        )
+        return result.stdout.strip() not in ("", "none")
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+
+
+if not _running_in_vm():
+    os.environ.setdefault("GSK_RENDERER", "gl")
 
 import gi
 
