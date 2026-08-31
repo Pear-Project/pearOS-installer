@@ -258,6 +258,21 @@ if ! echo "$HOST_NAME" | tee /etc/hostname; then
   error_exit "Failed to set hostname"
 fi
 
+# /etc/hostname alone isn't enough - sudo (and anything else that calls
+# gethostname()) resolves the local hostname via /etc/hosts's 127.0.1.1
+# entry first; without one, that lookup falls through to DNS and fails
+# with "unable to resolve host $HOST_NAME: Temporary failure in name
+# resolution" on the first command after boot, before quietly stopping
+# once some other NSS path picks it up. Replace any existing 127.0.1.1
+# line (stale hostname from the base image) instead of just appending, so
+# repeated runs of this script don't pile up duplicates.
+echo "Updating /etc/hosts for hostname $HOST_NAME..."
+if grep -q "^127\.0\.1\.1[[:space:]]" /etc/hosts; then
+  sed -i "s/^127\.0\.1\.1[[:space:]].*/127.0.1.1\t$HOST_NAME/" /etc/hosts
+else
+  echo -e "127.0.1.1\t$HOST_NAME" >> /etc/hosts
+fi
+
 # Add the grub theme to the configuration file
 echo "Generating grub configuration..."
 if ! grub-mkconfig -o /boot/grub/grub.cfg; then
